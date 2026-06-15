@@ -1,0 +1,44 @@
+<div class="hive-cart {{roleClass}}">
+  <div class="hc-main">
+    <section class="hc-cross">
+      <div class="hc-collabel">{{localize "HIVECART.CrossSection"}}</div>
+      <div class="hc-hive" data-hc="hive"></div>
+    </section>
+    <section class="hc-layer">
+      <div class="hc-head">
+        <h2 data-hc="layerName">—</h2>
+        <span class="hc-sub" data-hc="layerSub"></span>
+        <span class="hc-count" data-hc="layerCount"></span>
+      </div>
+      <div class="hc-body">
+        <div class="hc-disk" data-hc="disk"></div>
+        <aside class="hc-insp">
+          <div class="hc-grp gm">
+            <div class="hc-lbl">{{localize "HIVECART.Tools"}}</div>
+            <div class="hc-modes" data-hc="modes">
+              <button class="hc-tool active" data-mode="select">{{localize "HIVECART.Select"}}</button>
+              <button class="hc-tool" data-mode="wedge">{{localize "HIVECART.District"}}</button>
+              <button class="hc-tool" data-mode="circle">{{localize "HIVECART.Zone"}}</button>
+              <button class="hc-tool" data-mode="point">{{localize "HIVECART.Landmark"}}</button>
+            </div>
+            <div class="hc-actions">
+              <button class="hc-tool" data-act="rename">{{localize "HIVECART.Rename"}}</button>
+              <button class="hc-tool" data-act="recolour">{{localize "HIVECART.Recolour"}}</button>
+              <button class="hc-tool" data-act="delete">{{localize "HIVECART.Delete"}}</button>
+              <button class="hc-tool" data-act="addLayer">{{localize "HIVECART.AddLayer"}}</button>
+              <button class="hc-tool" data-act="layerUp">{{localize "HIVECART.LayerUp"}}</button>
+              <button class="hc-tool" data-act="layerDown">{{localize "HIVECART.LayerDown"}}</button>
+              <button class="hc-tool" data-act="renameLayer">{{localize "HIVECART.RenameLayer"}}</button>
+              <button class="hc-tool" data-act="removeLayer">{{localize "HIVECART.RemoveLayer"}}</button>
+            </div>
+            <div class="hc-hint" data-hc="hint"></div>
+          </div>
+          <div class="hc-info empty" data-hc="info">
+            <div class="hc-lbl">{{localize "HIVECART.Selection"}}</div>
+            <div class="hc-name">{{localize "HIVECART.NothingSelected"}}</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+</div>
