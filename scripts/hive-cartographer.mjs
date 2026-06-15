@@ -21,8 +21,8 @@ Hooks.once("init", () => {
   console.log(`${MODULE_ID} | initialised`);
 });
 
-// Module API (filled in by later tasks: open() renders the HiveApp).
-Hooks.once("ready", () => {
+Hooks.once("ready", async () => {
+  const { HiveApp } = await import("./apps/hive-app.mjs");
   const mod = game.modules.get(MODULE_ID);
-  mod.api = mod.api || {};
+  mod.api = { open: () => new HiveApp().render(true) };
 });
