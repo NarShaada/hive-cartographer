@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { defaultHive, defaultLayer, centralHub, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
 import { addLayer, removeLayer, moveLayer, layerById } from "../scripts/data/hive-model.mjs";
+import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, recolour, PALETTE } from "../scripts/data/hive-model.mjs";
 
 describe("defaults", () => {
   it("a default hive has one layer holding a central Spinal Transit circle", () => {
@@ -77,5 +78,33 @@ describe("layer CRUD", () => {
     expect(h.layers[0].id).toBe(b);
     expect(h.layers[1].id).toBe(a);
     expect(moveLayer(h, b, -1)).toBe(false);
+  });
+});
+
+describe("entity CRUD", () => {
+  it("adds a wedge district and finds it", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const id = addWedge(h, L.id, { name: "Gate 47", color: PALETTE[0], a0: -90, a1: -20, rOut: 0.9 });
+    const w = findEntity(L, id);
+    expect(w.type).toBe("wedge"); expect(w.name).toBe("Gate 47"); expect(w.a1).toBe(-20);
+  });
+  it("adds a zone circle and a landmark point", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const cid = addCircle(h, L.id, { name: "Market", color: PALETTE[1], cx: 0.3, cy: -0.2, r: 0.25 });
+    const pid = addPoint(h, L.id, { name: "Cathedral", x: 0.5, y: 0.1 });
+    expect(findEntity(L, cid).type).toBe("circle");
+    expect(findEntity(L, pid).type).toBe("point");
+    expect(L.points).toHaveLength(1);
+  });
+  it("rename, recolour and remove operate on regions or points", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const pid = addPoint(h, L.id, { name: "Old", x: 0, y: 0 });
+    expect(renameEntity(L, pid, "New")).toBe(true);
+    expect(findEntity(L, pid).name).toBe("New");
+    const hub = L.regions[0];
+    const before = hub.color;
+    expect(recolour(L, hub.id)).not.toBe(before);
+    expect(removeEntity(L, pid)).toBe(true);
+    expect(L.points).toHaveLength(0);
   });
 });
