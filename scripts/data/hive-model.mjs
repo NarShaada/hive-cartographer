@@ -30,7 +30,7 @@ function fixWedge(r) {
   return {
     id: r.id || newId("w"), type: "wedge",
     name: r.name || "District", color: r.color || PALETTE[0],
-    a0: Number(r.a0) || 0, a1: Number.isFinite(r.a1) ? r.a1 : 90, rOut: Number.isFinite(r.rOut) ? r.rOut : 1,
+    a0: Number.isFinite(r.a0) ? r.a0 : 0, a1: Number.isFinite(r.a1) ? r.a1 : 90, rOut: Number.isFinite(r.rOut) ? r.rOut : 1,
   };
 }
 function fixCircle(r) {
@@ -85,23 +85,23 @@ export function moveLayer(model, id, dir) {
   return true;
 }
 
-export function addWedge(model, layerId, { name, color, a0, a1, rOut }) {
+export function addWedge(model, layerId, props) {
   const L = layerById(model, layerId); if (!L) return null;
-  const w = { id: newId("w"), type: "wedge", name: name || "District", color: color || PALETTE[0], a0, a1, rOut };
+  const w = fixWedge({ ...props });   // fills id, type, defaults, coerces numbers
   L.regions.push(w);
   return w.id;
 }
 
-export function addCircle(model, layerId, { name, color, cx, cy, r }) {
+export function addCircle(model, layerId, props) {
   const L = layerById(model, layerId); if (!L) return null;
-  const c = { id: newId("c"), type: "circle", name: name || "Zone", color: color || PALETTE[1], cx, cy, r };
+  const c = fixCircle({ ...props });
   L.regions.push(c);
   return c.id;
 }
 
-export function addPoint(model, layerId, { name, x, y }) {
+export function addPoint(model, layerId, props) {
   const L = layerById(model, layerId); if (!L) return null;
-  const p = { id: newId("p"), type: "point", name: name || "Landmark", x, y };
+  const p = fixPoint({ ...props });
   L.points.push(p);
   return p.id;
 }

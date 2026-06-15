@@ -108,3 +108,24 @@ describe("entity CRUD", () => {
     expect(L.points).toHaveLength(0);
   });
 });
+
+describe("invariants and edge cases", () => {
+  it("moveLayer returns false at the bottom bound", () => {
+    const h = defaultHive();
+    const b = addLayer(h, "B", "");
+    expect(moveLayer(h, b, 1)).toBe(false);   // already last
+  });
+  it("recolour returns null for a landmark point", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const pid = addPoint(h, L.id, { name: "Cathedral", x: 0, y: 0 });
+    expect(recolour(L, pid)).toBe(null);
+  });
+  it("addWedge fills safe defaults when geometry is omitted", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const id = addWedge(h, L.id, { name: "Bare" });
+    const w = findEntity(L, id);
+    expect(Number.isFinite(w.a0)).toBe(true);
+    expect(Number.isFinite(w.a1)).toBe(true);
+    expect(w.rOut).toBe(1);
+  });
+});
