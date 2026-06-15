@@ -26,3 +26,20 @@ Hooks.once("ready", async () => {
   const mod = game.modules.get(MODULE_ID);
   mod.api = { open: () => new HiveApp().render(true) };
 });
+
+// Scene-controls launcher. The control/tool API shape varies across Foundry versions; this targets
+// v13/v14 record-style controls. If the button does not appear, the reliable fallback is
+// game.modules.get("hive-cartographer").api.open() — verify and adjust property names per version.
+Hooks.on("getSceneControlButtons", (controls) => {
+  const open = () => game.modules.get(MODULE_ID).api?.open();
+  const group = controls.tokens ?? Object.values(controls)[0];
+  if (!group?.tools) return;
+  group.tools.hiveMap = {
+    name: "hiveMap",
+    title: game.i18n.localize("HIVECART.OpenMap"),
+    icon: "fa-solid fa-city",
+    button: true,
+    onChange: () => open(),
+    onClick: () => open(),
+  };
+});
