@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { defaultHive, defaultLayer, centralHub, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
+import { addLayer, removeLayer, moveLayer, layerById } from "../scripts/data/hive-model.mjs";
 
 describe("defaults", () => {
   it("a default hive has one layer holding a central Spinal Transit circle", () => {
@@ -49,5 +50,32 @@ describe("migrate", () => {
     expect(w.rOut).toBe(1);
     expect(w.color).toBeTruthy();
     expect(w.name).toBeTruthy();
+  });
+});
+
+describe("layer CRUD", () => {
+  it("addLayer appends a layer with a central hub and returns its id", () => {
+    const h = defaultHive();
+    const id = addLayer(h, "Underhive", "Depths");
+    expect(h.layers).toHaveLength(2);
+    expect(layerById(h, id).name).toBe("Underhive");
+    expect(layerById(h, id).regions[0].name).toBe("Spinal Transit");
+  });
+  it("removeLayer drops a layer but never the last one", () => {
+    const h = defaultHive();
+    const id = addLayer(h, "Second", "");
+    expect(removeLayer(h, id)).toBe(true);
+    expect(h.layers).toHaveLength(1);
+    expect(removeLayer(h, h.layers[0].id)).toBe(false);
+    expect(h.layers).toHaveLength(1);
+  });
+  it("moveLayer reorders up/down within bounds", () => {
+    const h = defaultHive();
+    const a = h.layers[0].id;
+    const b = addLayer(h, "B", "");
+    expect(moveLayer(h, b, -1)).toBe(true);
+    expect(h.layers[0].id).toBe(b);
+    expect(h.layers[1].id).toBe(a);
+    expect(moveLayer(h, b, -1)).toBe(false);
   });
 });
