@@ -92,6 +92,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     root.querySelector('[data-hc="layerName"]').textContent = L.name;
     root.querySelector('[data-hc="layerSub"]').textContent = L.sub || "";
     root.querySelector('[data-hc="layerCount"]').textContent = `LAYER ${this.model.layers.length - this.#cur} / ${this.model.layers.length} · ${L.regions.length} REGIONS · ${L.points.length} LANDMARKS`;
+    root.querySelector('[data-hc="hint"]').textContent = game.i18n.localize(HINT[this.#mode]);   // keep the tool hint populated (incl. first open)
     this.#renderInfo();   // also re-renders the disk (selection highlight)
   }
 
