@@ -1,0 +1,15 @@
+{
+  "id": "hive-cartographer",
+  "title": "Hive Cartographer",
+  "description": "A GM-curated vertical hive-city map — a visual aid, not a battlemap. System-agnostic.",
+  "version": "0.1.0",
+  "compatibility": { "minimum": "13", "verified": "14" },
+  "authors": [{ "name": "NarShaada", "url": "https://github.com/NarShaada" }],
+  "esmodules": ["scripts/hive-cartographer.mjs"],
+  "styles": ["styles/hive-cartographer.css"],
+  "languages": [{ "lang": "en", "name": "English", "path": "lang/en.json" }],
+  "url": "https://github.com/NarShaada/hive-cartographer",
+  "manifest": "https://github.com/NarShaada/hive-cartographer/releases/latest/download/module.json",
+  "download": "https://github.com/NarShaada/hive-cartographer/releases/latest/download/hive-cartographer.zip",
+  "license": "GPL-3.0"
+}

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Hive Cartographer — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0f; --bg2:#0e1116; --panel:#13181e; --panel2:#191f27; --panel3:#212a34;
+    --ink:#cdd6df; --ink2:#eef3f8; --muted:#7d8896; --faint:#566170;
+    --gold:#c8a24a; --gold2:#e6c878; --glow:rgba(200,162,74,.45);
+    --line:#2a333d; --line2:#384451; --red:#bb5038; --teal:#5fae9a;
+    --display:'Cinzel',serif; --cond:'Barlow Condensed',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(120% 80% at 50% -10%, #16202b 0%, var(--bg) 55%) fixed,var(--bg);
+    color:var(--ink); font-family:var(--cond); letter-spacing:.3px;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);
+    mix-blend-mode:overlay;opacity:.5;}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:49;
+    box-shadow:inset 0 0 220px 40px rgba(0,0,0,.85);}
+
+  .app{display:flex;flex-direction:column;height:100vh;}
+
+  header.bar{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--panel2),var(--panel));}
+  header .sigil{font-size:22px;color:var(--gold);text-shadow:0 0 12px var(--glow);}
+  header .titles{display:flex;flex-direction:column;line-height:1;}
+  header h1{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink2);}
+  header .sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:3px;}
+  header .status{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--teal);display:flex;gap:16px;align-items:center;}
+  header .status .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);display:inline-block;margin-right:6px;}
+  .role-toggle{display:flex;border:1px solid var(--line2);}
+  .role-toggle button{font-family:var(--cond);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;
+    background:transparent;color:var(--muted);border:none;padding:5px 12px;cursor:pointer;}
+  .role-toggle button.on{background:var(--gold);color:#1a1206;font-weight:600;}
+
+  main{flex:1;display:flex;min-height:0;}
+
+  .crosssection{width:300px;flex:0 0 300px;border-right:1px solid var(--line);padding:14px 10px 18px;
+    display:flex;flex-direction:column;background:linear-gradient(180deg,var(--bg2),var(--bg));overflow:hidden;}
+  .col-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--faint);text-align:center;margin-bottom:8px;}
+  .hive{position:relative;flex:1;display:flex;flex-direction:column;gap:2px;padding:0 8px;}
+  .antenna{height:24px;width:2px;background:linear-gradient(var(--gold),transparent);margin:0 auto;position:relative;}
+  .antenna::after{content:"";position:absolute;top:-4px;left:-3px;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--glow);}
+  .tier{position:relative;flex:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,var(--panel2),#0d1117);border-top:1px solid rgba(255,255,255,.04);transition:filter .15s, background .15s;}
+  .tier:hover{filter:brightness(1.35);}
+  .tier .chip{position:relative;z-index:2;padding:3px 12px;background:rgba(7,9,12,.72);border:1px solid var(--line2);
+    font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);white-space:nowrap;display:flex;align-items:center;gap:8px;}
+  .tier .chip b{font-weight:600;color:var(--ink2);}
+  .tier .chip .lv{font-family:var(--mono);font-size:9px;color:var(--gold);}
+  .tier.active{background:linear-gradient(180deg,#2c2410,#171307);}
+  .tier.active .chip{border-color:var(--gold);box-shadow:0 0 14px var(--glow);color:var(--gold2);}
+  .tier.active::before{content:"";position:absolute;inset:0;border:1px solid var(--gold);clip-path:inherit;opacity:.5;}
+
+  .layerview{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .lv-head{padding:14px 22px 8px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;}
+  .lv-head h2{margin:0;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink2);}
+  .lv-head .lv-sub{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .lv-head .lv-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint);}
+
+  .lv-body{flex:1;display:flex;min-height:0;}
+  .disk-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;padding:18px;min-width:0;}
+  .disk-wrap.drawmode{cursor:crosshair;}
+  .disk-wrap svg{user-select:none;}
+  .region{transition:filter .12s;}
+  .region.clickable{cursor:pointer;}
+  .region.clickable:hover{filter:brightness(1.3);}
+  .region.sel{stroke:var(--gold2);stroke-width:2.5;filter:drop-shadow(0 0 8px var(--glow));}
+  .rlabel{font-family:var(--cond);font-size:11px;letter-spacing:.5px;fill:#0c0f13;pointer-events:none;text-transform:uppercase;font-weight:600;}
+  .clabel{font-family:var(--mono);font-size:8px;fill:var(--gold);letter-spacing:1px;text-transform:uppercase;pointer-events:none;}
+  .ring{fill:none;stroke:rgba(200,162,74,.18);}
+  .tick{stroke:rgba(200,162,74,.3);}
+  .pmark{fill:var(--gold2);stroke:#0a0c0f;stroke-width:1.5;}
+  .pmark.clickable{cursor:pointer;}
+  .pmark.sel{fill:#fff;filter:drop-shadow(0 0 6px var(--glow));}
+  .plabel{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:.5px;fill:var(--gold2);
+    paint-order:stroke;stroke:#06080b;stroke-width:3px;text-transform:uppercase;pointer-events:none;}
+  .preview{fill:rgba(200,162,74,.18);stroke:var(--gold2);stroke-width:2;stroke-dasharray:5 4;}
+  .handle{fill:var(--gold2);stroke:#06080b;stroke-width:1.5;cursor:pointer;}
+  .handle:hover{fill:#fff;}
+  .disk-wrap:not(.drawmode) .region.sel,.disk-wrap:not(.drawmode) .pmark.sel{cursor:move;}
+
+  .inspector{width:272px;flex:0 0 272px;border-left:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;padding:14px 16px 18px;gap:12px;overflow:auto;}
+  .grp .lbl{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:8px;}
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .tool{display:flex;align-items:center;gap:9px;font-family:var(--cond);font-size:12.5px;letter-spacing:1px;text-transform:uppercase;
+    background:var(--panel);color:var(--ink);border:1px solid var(--line2);padding:7px 10px;cursor:pointer;transition:all .12s;}
+  .tool:hover{border-color:var(--gold);color:var(--gold2);}
+  .tool .ic{font-size:13px;width:16px;text-align:center;color:var(--gold);}
+  .tool.active{background:#2a2110;border-color:var(--gold);color:var(--gold2);box-shadow:0 0 10px var(--glow) inset;}
+  .actions{display:flex;flex-direction:column;gap:7px;margin-top:10px;}
+
+  .region-info{border-top:1px solid var(--line);padding-top:12px;margin-top:6px;}
+  .region-info .lbl{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--faint);margin-bottom:8px;}
+  .region-info .name{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:16px;color:var(--ink2);text-transform:uppercase;letter-spacing:1px;}
+  .region-info .kindtag{font-family:var(--mono);font-size:9px;color:var(--gold);border:1px solid var(--line2);padding:1px 5px;letter-spacing:1px;}
+  .swatch{width:14px;height:14px;border:1px solid rgba(255,255,255,.3);flex:0 0 auto;}
+  .region-info .notes{margin-top:9px;font-size:13px;line-height:1.5;color:var(--muted);font-style:italic;}
+  .region-info.empty .name{color:var(--faint);font-family:var(--cond);font-style:italic;font-size:14px;letter-spacing:.5px;text-transform:none;}
+
+  .hint{font-size:11px;color:var(--faint);font-style:italic;line-height:1.45;margin-top:8px;}
+  .player .grp.gm{display:none;}
+</style>
+</head>
+<body class="gm">
+<div class="app">
+  <header class="bar">
+    <span class="sigil">&#9883;</span>
+    <div class="titles">
+      <h1>Hive Cartographer</h1>
+      <div class="sub">Hive Primaris &middot; Cartographic Cogitator</div>
+    </div>
+    <div class="status">
+      <span><span class="dot"></span>COGITATOR LINK STABLE</span>
+      <div class="role-toggle">
+        <button id="roleGM" class="on" onclick="setRole('gm')">GM</button>
+        <button id="rolePlayer" onclick="setRole('player')">Player</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="crosssection">
+      <div class="col-label">Vertical Cross-Section</div>
+      <div class="antenna"></div>
+      <div class="hive" id="hive"></div>
+    </section>
+
+    <section class="layerview">
+      <div class="lv-head">
+        <h2 id="lvName">—</h2>
+        <span class="lv-sub" id="lvSub"></span>
+        <span class="lv-count" id="lvCount"></span>
+      </div>
+      <div class="lv-body">
+        <div class="disk-wrap" id="diskWrap"><div id="disk"></div></div>
+        <aside class="inspector">
+          <div class="grp gm">
+            <div class="lbl">Draw Tools &middot; GM</div>
+            <div class="modes">
+              <button class="tool active" data-mode="select" onclick="setMode('select')"><span class="ic">&#9655;</span>Select</button>
+              <button class="tool" data-mode="wedge" onclick="setMode('wedge')"><span class="ic">&#9685;</span>District</button>
+              <button class="tool" data-mode="circle" onclick="setMode('circle')"><span class="ic">&#9711;</span>Zone</button>
+              <button class="tool" data-mode="point" onclick="setMode('point')"><span class="ic">&#9670;</span>Landmark</button>
+            </div>
+            <div class="actions">
+              <button class="tool" onclick="renameSel()"><span class="ic">&#9998;</span>Rename Selected</button>
+              <button class="tool" onclick="recolourSel()"><span class="ic">&#9632;</span>Recolour Selected</button>
+              <button class="tool" onclick="deleteSel()"><span class="ic">&#10005;</span>Delete Selected</button>
+              <button class="tool" onclick="addLayer()"><span class="ic">&#9776;</span>Add Layer</button>
+            </div>
+            <div class="hint" id="hint"></div>
+          </div>
+          <div class="region-info empty" id="regionInfo">
+            <div class="lbl">Selection</div><div class="name">Nothing selected</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ---------- Data model (the shape we'd persist as JSON) ----------
+   layer = { name, sub, regions:[ wedge | circle ], points:[ landmark ] }
+   wedge  = { id, type:'wedge',  name, color, a0, a1, rOut }
+   circle = { id, type:'circle', name, color, cx, cy, r }
+   point  = { id, name, x, y }                                         */
+const PALETTE=["#7c4a3a","#4f6b5e","#8a7338","#54637a","#6e4258","#5d6b3a","#7a5a3c","#436a72"];
+const CX=210, CY=210, R=192;
+let UID=0; const uid=p=>p+(++UID);
+
+function seed(name,sub,names,points){
+  const n=names.length, weights=[1.45,0.8,1.2,1.0,0.92,1.3,1.1];
+  let total=0; for(let i=0;i<n;i++) total+=weights[i%weights.length];
+  let acc=-90; const regions=[];
+  names.forEach((nm,i)=>{ const span=360*weights[i%weights.length]/total;
+    regions.push({id:uid('w'),type:'wedge',name:nm,color:PALETTE[i%PALETTE.length],a0:acc,a1:acc+span,rOut:R}); acc+=span; });
+  regions.push({id:uid('c'),type:'circle',name:'Spinal Transit',color:'#27323d',cx:CX,cy:CY,r:30});
+  return {name,sub,regions,points:(points||[]).map(p=>({id:uid('p'),...p}))};
+}
+const hive={ name:"Hive Primaris", layers:[
+  seed("The Spire","Adeptus & Nobility",["Cathedral of the Emperor","Governor's Palace","Adeptus Spire","High Mesa Gardens"],
+      [{name:"Astropath Choir",x:CX+78,y:CY-58}]),
+  seed("Upper Hab","Administratum Quarter",["Administratum","Scholam Progenium","Magistratum Precinct","Clave Heights","Transit Nexus I"]),
+  seed("Hab-Zones","Primary Population",["Gateway 47","The Calderns","Arbites Precinct","Rust Quarter","Templum District"],
+      [{name:"Martyr's Gate",x:CX-96,y:CY+30},{name:"The Black Cathedral",x:CX+58,y:CY+86}]),
+  seed("Manufactorum","The Forge District",["Forge Tertius","Promethium Stacks","Servitor Vats","Foundry Sprawl","Cargo Spine"]),
+  seed("Commercia","Markets & Trade",["Grand Bazaar","Guilder Halls","The Shambles","Customs Wharf","Coin Quarter"]),
+  seed("Underhive","The Lawless Depths",["Dead Man's Run","The Sump Gate","Scavvy Warrens","Gang Holds","Collapsed Sector 9"]),
+  seed("The Sump","Toxic Bottom",["Toxic Flats","Mutant Shanties","The Black Lake"]),
+]};
+
+let cur=2, sel=null, mode='select', role='gm', drag=null, selDrag=null;
+const HINTS={
+  select:"Click to select. Drag the body to move (districts rotate; zones/landmarks slide). Drag the gold handles to resize. Then rename, recolour or delete.",
+  wedge:"District: press near the centre and drag around — sweep sets the angular size, distance sets the radius. Release to name it.",
+  circle:"Zone: press where you want the centre and drag outward to set the radius. The Spinal Transit hub is just a zone.",
+  point:"Landmark: click any spot to drop a named marker (e.g. a Cathedral) inside a district.",
+};
+
+/* ---------- Cross-section ---------- */
+const CLIP=[[40,32],[32,25],[25,19],[19,13],[13,9],[9,6],[6,3]];
+const GROW=[0.8,0.9,1.05,1.1,1,0.95,0.8];
+function buildHive(){
+  const el=document.getElementById('hive'); el.innerHTML='';
+  hive.layers.forEach((L,i)=>{
+    const [tl,bl]=CLIP[Math.min(i,CLIP.length-1)], tr=100-tl, br=100-bl;
+    const d=document.createElement('div');
+    d.className='tier'+(i===cur?' active':'');
+    d.style.clipPath=`polygon(${tl}% 0, ${tr}% 0, ${br}% 100%, ${bl}% 100%)`;
+    d.style.flexGrow=GROW[Math.min(i,GROW.length-1)];
+    d.onclick=()=>selectLayer(i);
+    d.innerHTML=`<div class="chip"><span class="lv">L${hive.layers.length-i}</span><b>${L.name}</b></div>`;
+    el.appendChild(d);
+  });
+}
+
+/* ---------- Geometry ---------- */
+function pt(deg,r){ const a=deg*Math.PI/180; return [ +(CX+r*Math.cos(a)).toFixed(1), +(CY+r*Math.sin(a)).toFixed(1) ]; }
+function hdl(x,y,n){ return `<circle class="handle" data-handle="${n}" cx="${x}" cy="${y}" r="6"/>`; }
+function wedgePath(a0,a1,rOut){
+  if(a1<a0) a1+=360;
+  let p=`M ${CX} ${CY} L ${pt(a0,rOut).join(' ')} `, steps=Math.max(6,Math.round((a1-a0)/8));
+  for(let s=1;s<=steps;s++){ const a=a0+(a1-a0)*s/steps; const wob=rOut*(0.97+0.03*Math.sin(a*4.7+a0)); p+=`L ${pt(a,wob).join(' ')} `; }
+  return p+'Z';
+}
+function midPt(rg){ if(rg.type==='wedge'){return pt((rg.a0+rg.a1)/2, rg.rOut*0.6);} return [rg.cx,rg.cy]; }
+
+/* ---------- Disk render ---------- */
+function renderDisk(){
+  const L=hive.layers[cur];
+  document.getElementById('lvName').textContent=L.name;
+  document.getElementById('lvSub').textContent=L.sub;
+  document.getElementById('lvCount').textContent=`LAYER ${hive.layers.length-cur} / ${hive.layers.length} · ${L.regions.length} REGIONS · ${L.points.length} LANDMARKS`;
+  const click = (role==='gm'&&mode==='select');
+
+  let s=`<svg viewBox="0 0 420 420" style="width:min(480px,100%);height:auto">`;
+  s+=`<circle class="ring" cx="${CX}" cy="${CY}" r="${R+6}"/><circle class="ring" cx="${CX}" cy="${CY}" r="${R+11}" style="stroke:rgba(200,162,74,.35)"/>`;
+  for(let t=0;t<24;t++){ const a=t*15,[x1,y1]=pt(a,R+6),[x2,y2]=pt(a,R+(t%6===0?16:11)); s+=`<line class="tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`; }
+
+  // wedges first, then circles, then landmarks (z-order)
+  L.regions.filter(r=>r.type==='wedge').forEach(rg=>{
+    const sl=rg.id===sel; s+=`<path class="region${click?' clickable':''}${sl?' sel':''}" data-id="${rg.id}" d="${wedgePath(rg.a0,rg.a1,rg.rOut)}" fill="${rg.color}" fill-opacity="${sl?0.95:0.8}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`;
+    const[lx,ly]=midPt(rg); s+=`<text class="rlabel" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${rg.name}</text>`;
+  });
+  L.regions.filter(r=>r.type==='circle').forEach(rg=>{
+    const sl=rg.id===sel; s+=`<circle class="region${click?' clickable':''}${sl?' sel':''}" data-id="${rg.id}" cx="${rg.cx}" cy="${rg.cy}" r="${rg.r}" fill="${rg.color}" fill-opacity="${sl?0.95:0.85}" stroke="rgba(200,162,74,.5)" stroke-width="1.2"/>`;
+    s+=`<text class="clabel" x="${rg.cx}" y="${rg.cy}" text-anchor="middle" dominant-baseline="middle">${rg.name}</text>`;
+  });
+  L.points.forEach(p=>{
+    const sl=p.id===sel; const d=8;
+    s+=`<path class="pmark${click?' clickable':''}${sl?' sel':''}" data-id="${p.id}" d="M ${p.x} ${p.y-d} L ${p.x+d} ${p.y} L ${p.x} ${p.y+d} L ${p.x-d} ${p.y} Z"/>`;
+    s+=`<text class="plabel" x="${p.x+d+4}" y="${p.y+4}">${p.name}</text>`;
+  });
+
+  // resize handles on the selected shape (GM select mode)
+  if(click){ const so=sel&&find(sel);
+    if(so&&so.type==='circle'){ s+=hdl(so.cx+so.r,so.cy,'resizeR'); }
+    else if(so&&so.type==='wedge'){ const m=pt((so.a0+so.a1)/2,so.rOut),e0=pt(so.a0,so.rOut),e1=pt(so.a1,so.rOut);
+      s+=hdl(m[0],m[1],'resizeR')+hdl(e0[0],e0[1],'a0')+hdl(e1[0],e1[1],'a1'); }
+  }
+  // live draw preview
+  if(drag){
+    if(drag.kind==='wedge') s+=`<path class="preview" d="${wedgePath(drag.a0,drag.a1,drag.r)}"/>`;
+    if(drag.kind==='circle') s+=`<circle class="preview" cx="${drag.cx}" cy="${drag.cy}" r="${drag.r}"/>`;
+  }
+  s+=`</svg>`;
+  document.getElementById('disk').innerHTML=s;
+}
+
+/* ---------- Selection / inspector ---------- */
+function find(id){ const L=hive.layers[cur]; return L.regions.find(r=>r.id===id)||L.points.find(p=>p.id===id); }
+function selectLayer(i){ cur=i; sel=null; buildHive(); renderDisk(); renderInfo(); }
+function selectById(id){ sel=id; renderDisk(); renderInfo(); }
+function renderInfo(){
+  const box=document.getElementById('regionInfo'), o=sel&&find(sel);
+  if(!o){ box.className='region-info empty'; box.innerHTML=`<div class="lbl">Selection</div><div class="name">Nothing selected</div>`; return; }
+  const kind=o.type==='wedge'?'District':o.type==='circle'?'Zone':'Landmark';
+  const sw=o.color?`<span class="swatch" style="background:${o.color}"></span>`:`<span class="swatch" style="background:var(--gold2)"></span>`;
+  box.className='region-info';
+  box.innerHTML=`<div class="lbl">Selection</div>
+    <div class="name">${sw}${o.name} <span class="kindtag">${kind}</span></div>
+    <div class="notes">GM notes for this ${kind.toLowerCase()} appear here — factions, rumours, plot hooks. Players read what you choose to reveal.</div>`;
+}
+
+/* ---------- Modes & drawing ---------- */
+function setMode(m){ mode=m; sel=null;
+  document.querySelectorAll('.modes .tool').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+  document.getElementById('diskWrap').classList.toggle('drawmode', m!=='select');
+  document.getElementById('hint').textContent=HINTS[m];
+  renderDisk(); renderInfo();
+}
+function svgPt(e){ const svg=document.querySelector('#disk svg'); const r=svg.getBoundingClientRect();
+  return { x:(e.clientX-r.left)*(420/r.width), y:(e.clientY-r.top)*(420/r.height) }; }
+function ang(p){ return Math.atan2(p.y-CY,p.x-CX)*180/Math.PI; }
+function dist(p){ return Math.hypot(p.x-CX,p.y-CY); }
+
+function snap(o){ return o.type==='wedge'?{a0:o.a0,a1:o.a1}:o.type==='circle'?{cx:o.cx,cy:o.cy}:{x:o.x,y:o.y}; }
+function onDown(e){
+  if(role!=='gm') return;
+  if(!document.querySelector('#disk svg')) return;
+  if(mode!=='select'){
+    const p=svgPt(e); e.preventDefault();
+    if(mode==='point'){ addPoint(p); return; }
+    if(mode==='wedge'){ const a=ang(p); drag={kind:'wedge',start:a,a0:a,a1:a+1,r:Math.max(60,dist(p))}; }
+    if(mode==='circle'){ drag={kind:'circle',cx:p.x,cy:p.y,r:6}; }
+    return;
+  }
+  // select mode → resize handle, select+move, or deselect
+  const ds=e.target.dataset||{};
+  if(ds.handle && sel){ selDrag={kind:ds.handle,o:find(sel)}; e.preventDefault(); return; }
+  if(ds.id){ sel=ds.id; const o=find(sel); selDrag={kind:'move',o,startMouse:svgPt(e),orig:snap(o)}; renderDisk(); renderInfo(); e.preventDefault(); return; }
+  sel=null; renderDisk(); renderInfo();
+}
+function onMove(e){
+  if(drag){ const p=svgPt(e);
+    if(drag.kind==='wedge'){ let span=ang(p)-drag.start; if(span<0) span+=360; drag.a0=drag.start; drag.a1=drag.start+Math.max(span,1); drag.r=Math.min(R,Math.max(50,dist(p))); }
+    if(drag.kind==='circle'){ drag.r=Math.max(8,Math.hypot(p.x-drag.cx,p.y-drag.cy)); }
+    renderDisk(); return;
+  }
+  if(selDrag){ const p=svgPt(e), o=selDrag.o;
+    if(selDrag.kind==='move'){
+      if(o.type==='wedge'){ const da=ang(p)-ang(selDrag.startMouse); o.a0=selDrag.orig.a0+da; o.a1=selDrag.orig.a1+da; }
+      else if(o.type==='circle'){ o.cx=selDrag.orig.cx+(p.x-selDrag.startMouse.x); o.cy=selDrag.orig.cy+(p.y-selDrag.startMouse.y); }
+      else { o.x=selDrag.orig.x+(p.x-selDrag.startMouse.x); o.y=selDrag.orig.y+(p.y-selDrag.startMouse.y); }
+    }
+    else if(selDrag.kind==='resizeR'){ if(o.type==='circle') o.r=Math.max(8,Math.hypot(p.x-o.cx,p.y-o.cy)); else o.rOut=Math.min(R,Math.max(50,dist(p))); }
+    else if(selDrag.kind==='a0'){ o.a0=ang(p); }
+    else if(selDrag.kind==='a1'){ let a=ang(p); while(a<o.a0) a+=360; o.a1=a; }
+    renderDisk();
+  }
+}
+function onUp(){
+  if(selDrag){ selDrag=null; renderInfo(); return; }
+  if(!drag) return; const L=hive.layers[cur]; const d=drag; drag=null;
+  if(d.kind==='wedge'&&(d.a1-d.a0)>=8){ const name=prompt("Name the district:","New District"); if(name){ const rg={id:uid('w'),type:'wedge',name,color:PALETTE[L.regions.length%PALETTE.length],a0:d.a0,a1:d.a1,rOut:d.r}; L.regions.push(rg); sel=rg.id; } }
+  if(d.kind==='circle'&&d.r>=10){ const name=prompt("Name the zone:","New Zone"); if(name){ const rg={id:uid('c'),type:'circle',name,color:PALETTE[L.regions.length%PALETTE.length],cx:d.cx,cy:d.cy,r:d.r}; L.regions.push(rg); sel=rg.id; } }
+  renderDisk(); renderInfo();
+}
+function addPoint(p){ const name=prompt("Name the landmark:","New Landmark"); if(!name) return; const o={id:uid('p'),name,x:p.x,y:p.y}; hive.layers[cur].points.push(o); sel=o.id; renderDisk(); renderInfo(); }
+
+/* ---------- Edit selected ---------- */
+function renameSel(){ const o=sel&&find(sel); if(!o){alert("Select something first.");return;} const n=prompt("Rename:",o.name); if(n){o.name=n;renderDisk();renderInfo();} }
+function recolourSel(){ const o=sel&&find(sel); if(!o||o.color===undefined){alert("Pick a district or zone (landmarks share one colour).");return;} o.color=PALETTE[(PALETTE.indexOf(o.color)+1)%PALETTE.length]; renderDisk(); renderInfo(); }
+function deleteSel(){ const o=sel&&find(sel); if(!o){alert("Select something first.");return;} const L=hive.layers[cur]; L.regions=L.regions.filter(r=>r.id!==o.id); L.points=L.points.filter(p=>p.id!==o.id); sel=null; renderDisk(); renderInfo(); }
+function addLayer(){ const name=prompt("Name the new layer:","New Layer"); if(!name) return; hive.layers.push({name,sub:"New stratum",regions:[{id:uid('c'),type:'circle',name:'Spinal Transit',color:'#27323d',cx:CX,cy:CY,r:30}],points:[]}); cur=hive.layers.length-1; sel=null; buildHive(); renderDisk(); renderInfo(); }
+
+function setRole(r){ role=r; document.body.className=r; if(r==='player') setMode('select');
+  document.getElementById('roleGM').classList.toggle('on',r==='gm'); document.getElementById('rolePlayer').classList.toggle('on',r==='player'); renderDisk(); }
+
+const disk=document.getElementById('disk');
+disk.addEventListener('mousedown',onDown);
+window.addEventListener('mousemove',onMove);
+window.addEventListener('mouseup',onUp);
+
+buildHive(); setMode('select'); renderDisk(); renderInfo();
+</script>
+</body>
+</html>
