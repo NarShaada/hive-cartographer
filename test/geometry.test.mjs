@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { polar, angleDeg, dist, toPx, toUnit, wedgePath } from "../scripts/geometry.mjs";
+import { polar, angleDeg, dist, toPx, toUnit, wedgePath, layerBands } from "../scripts/geometry.mjs";
 
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
@@ -46,5 +46,30 @@ describe("wedgePath", () => {
     const xs = nums.filter((_, i) => i % 2 === 0), ys = nums.filter((_, i) => i % 2 === 1);
     const maxR = Math.max(...xs.map((x, i) => Math.hypot(x, ys[i])));
     expect(maxR).toBeLessThan(55); // 0.5*100 plus the small organic wobble
+  });
+});
+
+describe("layerBands", () => {
+  it("returns one band per layer", () => {
+    expect(layerBands(7)).toHaveLength(7);
+  });
+  it("each band's top is narrower than its bottom (taper)", () => {
+    for (const b of layerBands(5)) expect(b.top).toBeLessThan(b.bot);
+  });
+  it("bands are continuous: a band's bottom equals the next band's top", () => {
+    const bands = layerBands(6);
+    for (let i = 0; i < bands.length - 1; i++) {
+      expect(bands[i].bot).toBeCloseTo(bands[i + 1].top, 6);
+    }
+  });
+  it("all half-widths stay within [minHalf, maxHalf]", () => {
+    const bands = layerBands(9, 0.12, 0.46);
+    for (const b of bands) {
+      expect(b.top).toBeGreaterThanOrEqual(0.12 - 1e-9);
+      expect(b.bot).toBeLessThanOrEqual(0.46 + 1e-9);
+    }
+  });
+  it("handles a single layer", () => {
+    expect(layerBands(1)).toHaveLength(1);
   });
 });

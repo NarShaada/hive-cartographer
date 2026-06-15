@@ -41,3 +41,12 @@ export function wedgePath(cx, cy, R, a0, a1, rOutUnit) {
   }
   return d + "Z";
 }
+
+// Half-widths (fraction of total width, 0..0.5) for a tapering vertical stack of n layers.
+// Edge k sits at lerp(minHalf, maxHalf, k/n); band i spans edge i (top) -> edge i+1 (bottom).
+export function layerBands(n, minHalf = 0.12, maxHalf = 0.46) {
+  const edge = (k) => minHalf + (maxHalf - minHalf) * (k / n);
+  const bands = [];
+  for (let i = 0; i < n; i++) bands.push({ top: edge(i), bot: edge(i + 1) });
+  return bands;
+}
