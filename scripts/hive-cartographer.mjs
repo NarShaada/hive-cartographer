@@ -18,6 +18,9 @@ Hooks.once("init", () => {
     default: {},                       // migrate() upgrades {} to a valid default hive on load
     onChange: (value) => notify(value), // fires on every client → open windows re-render
   });
+  // Preload the window template so the first open renders immediately (not a blank frame).
+  const tpl = `modules/${MODULE_ID}/templates/hive-app.hbs`;
+  (foundry.applications?.handlebars?.loadTemplates ?? globalThis.loadTemplates)?.([tpl]);
   console.log(`${MODULE_ID} | initialised`);
 });
 

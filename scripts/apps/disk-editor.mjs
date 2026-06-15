@@ -101,7 +101,7 @@ export function createDiskEditor(container, ctx) {
       const [ux, uy] = unit(toViewbox(e));
       ctx.mutateSelected((o) => {
         if (selDrag.kind === "move") {
-          if (o.type === "wedge") { const da = angleDeg(0, 0, ux, uy) - angleDeg(0, 0, selDrag.startU[0], selDrag.startU[1]); o.a0 = selDrag.orig.a0 + da; o.a1 = selDrag.orig.a1 + da; }
+          if (o.type === "wedge") { let da = angleDeg(0, 0, ux, uy) - angleDeg(0, 0, selDrag.startU[0], selDrag.startU[1]); da = ((da + 180) % 360 + 360) % 360 - 180; o.a0 = selDrag.orig.a0 + da; o.a1 = selDrag.orig.a1 + da; }
           else if (o.type === "circle") { o.cx = selDrag.orig.cx + (ux - selDrag.startU[0]); o.cy = selDrag.orig.cy + (uy - selDrag.startU[1]); }
           else { o.x = selDrag.orig.x + (ux - selDrag.startU[0]); o.y = selDrag.orig.y + (uy - selDrag.startU[1]); }
         } else if (selDrag.kind === "resizeR") {
