@@ -66,10 +66,14 @@
 .hive-cart .hc-tool:hover{border-color:var(--gold);color:var(--gold2);}
 .hive-cart .hc-tool.active{background:#2a2110;border-color:var(--gold);color:var(--gold2);}
 .hive-cart .hc-actions{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
-.hive-cart .hc-hint{font-size:11px;color:var(--faint);font-style:italic;line-height:1.45;margin-top:6px;}
 .hive-cart .hc-info{border-top:1px solid var(--line);padding-top:10px;margin-top:6px;}
 .hive-cart .hc-info .hc-lbl{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--faint);margin-bottom:8px;}
 .hive-cart .hc-info .hc-name{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:15px;color:var(--ink2);text-transform:uppercase;letter-spacing:1px;}
 .hive-cart .hc-info .hc-swatch{width:14px;height:14px;border:1px solid rgba(255,255,255,.3);}
 .hive-cart .hc-info.empty .hc-name{color:var(--faint);font-family:var(--cond);font-style:italic;text-transform:none;}
 .hive-cart.player .hc-grp.gm{display:none;}
+
+/* status footer — cogitator LED + Imperial sync stamp */
+.hive-cart .hc-status{position:relative;z-index:6;display:flex;align-items:center;gap:9px;padding:5px 14px;border-top:1px solid var(--line);background:var(--bg2);font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--teal);}
+.hive-cart .hc-led{width:8px;height:8px;border-radius:50%;background:#62c39a;box-shadow:0 0 7px #62c39a;flex:0 0 auto;animation:hc-pulse 2.4s ease-in-out infinite;}
+@keyframes hc-pulse{0%,100%{opacity:1}50%{opacity:.4}}

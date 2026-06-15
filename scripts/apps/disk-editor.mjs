@@ -25,18 +25,18 @@ export function createDiskEditor(container, ctx) {
       const a = t * 15, [x1, y1] = polar(CXp, CYp, Rp + 6, a), [x2, y2] = polar(CXp, CYp, Rp + (t % 6 === 0 ? 16 : 11), a);
       s += `<line class="hc-tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
     }
-    // wedges
-    for (const w of L.regions.filter((r) => r.type === "wedge")) {
-      const on = w.id === sel;
-      s += `<path class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${w.id}" d="${wedgePath(CXp, CYp, Rp, w.a0, w.a1, w.rOut)}" fill="${w.color}" fill-opacity="${on ? .95 : .8}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`;
-      const [lx, ly] = polar(CXp, CYp, w.rOut * Rp * 0.6, (w.a0 + (w.a1 < w.a0 ? w.a1 + 360 : w.a1)) / 2);
-      s += `<text class="hc-rlabel" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(w.name)}</text>`;
-    }
-    // circles
-    for (const c of L.regions.filter((r) => r.type === "circle")) {
-      const on = c.id === sel, [px, py] = [CXp + c.cx * Rp, CYp + c.cy * Rp], pr = c.r * Rp;
-      s += `<circle class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${c.id}" cx="${px}" cy="${py}" r="${pr}" fill="${c.color}" fill-opacity="${on ? .95 : .85}" stroke="rgba(200,162,74,.5)" stroke-width="1.2"/>`;
-      s += `<text class="hc-clabel" x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle">${esc(c.name)}</text>`;
+    // regions in array order — later in the array = drawn on top (z-order, controllable via front/back)
+    for (const rg of L.regions) {
+      const on = rg.id === sel;
+      if (rg.type === "wedge") {
+        s += `<path class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" d="${wedgePath(CXp, CYp, Rp, rg.a0, rg.a1, rg.rOut)}" fill="${rg.color}" fill-opacity="${on ? .95 : .8}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`;
+        const [lx, ly] = polar(CXp, CYp, rg.rOut * Rp * 0.6, (rg.a0 + (rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1)) / 2);
+        s += `<text class="hc-rlabel" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+      } else {
+        const [px, py] = [CXp + rg.cx * Rp, CYp + rg.cy * Rp], pr = rg.r * Rp;
+        s += `<circle class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" cx="${px}" cy="${py}" r="${pr}" fill="${rg.color}" fill-opacity="${on ? .95 : .85}" stroke="rgba(200,162,74,.5)" stroke-width="1.2"/>`;
+        s += `<text class="hc-clabel" x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+      }
     }
     // landmarks
     for (const p of L.points) {

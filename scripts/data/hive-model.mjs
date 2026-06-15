@@ -10,16 +10,12 @@ export function newId(prefix = "id") {
   return `${prefix}_${Date.now().toString(36)}_${_seq.toString(36)}`;
 }
 
-export function centralHub() {
-  return { id: newId("c"), type: "circle", name: "Spinal Transit", color: "#27323d", cx: 0, cy: 0, r: 0.15 };
-}
-
 export function defaultLayer(name, sub) {
-  return { id: newId("L"), name, sub: sub || "", regions: [centralHub()], points: [] };
+  return { id: newId("L"), name, sub: sub || "", regions: [], points: [] };
 }
 
 export function defaultHive() {
-  return { version: SCHEMA_VERSION, name: "New Hive", layers: [defaultLayer("Surface", "")] };
+  return { version: SCHEMA_VERSION, name: "New Hive", updatedAt: null, layers: [defaultLayer("Surface", "")] };
 }
 
 export function serialize(model) {
@@ -54,7 +50,11 @@ export function migrate(raw) {
   if (!raw || typeof raw !== "object" || !Array.isArray(raw.layers) || raw.layers.length === 0) {
     return defaultHive();
   }
-  return { version: SCHEMA_VERSION, name: raw.name || "Hive", layers: raw.layers.map(fixLayer) };
+  return {
+    version: SCHEMA_VERSION, name: raw.name || "Hive",
+    updatedAt: Number.isFinite(raw.updatedAt) ? raw.updatedAt : null,
+    layers: raw.layers.map(fixLayer),
+  };
 }
 
 export function layerById(model, id) {
@@ -122,10 +122,26 @@ export function renameEntity(layer, id, name) {
   e.name = name; return true;
 }
 
-// Cycle a region's colour through the palette. Points have no colour (returns null).
-export function recolour(layer, id) {
+// Set a region's colour to an explicit value. Points have no colour (returns false).
+export function setColor(layer, id, color) {
   const e = findEntity(layer, id);
-  if (!e || e.color === undefined) return null;
-  e.color = PALETTE[(PALETTE.indexOf(e.color) + 1) % PALETTE.length];
-  return e.color;
+  if (!e || e.color === undefined) return false;
+  e.color = color; return true;
+}
+
+// Z-order within a layer (render order = array order). A region overlaps any region earlier in the array.
+export function bringToFront(layer, id) {
+  const i = layer.regions.findIndex((r) => r.id === id);
+  if (i < 0) return false;
+  const [r] = layer.regions.splice(i, 1);
+  layer.regions.push(r);
+  return true;
+}
+
+export function sendToBack(layer, id) {
+  const i = layer.regions.findIndex((r) => r.id === id);
+  if (i < 0) return false;
+  const [r] = layer.regions.splice(i, 1);
+  layer.regions.unshift(r);
+  return true;
 }

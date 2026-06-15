@@ -1,27 +1,23 @@
 import { describe, it, expect } from "vitest";
-import { defaultHive, defaultLayer, centralHub, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
+import { defaultHive, defaultLayer, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
 import { addLayer, removeLayer, moveLayer, layerById } from "../scripts/data/hive-model.mjs";
-import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, recolour, PALETTE } from "../scripts/data/hive-model.mjs";
+import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, setColor, bringToFront, sendToBack, PALETTE } from "../scripts/data/hive-model.mjs";
 
 describe("defaults", () => {
-  it("a default hive has one layer holding a central Spinal Transit circle", () => {
+  it("a default hive has one empty layer (no seeded regions)", () => {
     const h = defaultHive();
     expect(h.version).toBe(SCHEMA_VERSION);
+    expect(h.updatedAt).toBe(null);
     expect(h.layers).toHaveLength(1);
-    const regs = h.layers[0].regions;
-    expect(regs).toHaveLength(1);
-    expect(regs[0].type).toBe("circle");
-    expect(regs[0].name).toBe("Spinal Transit");
+    expect(h.layers[0].regions).toEqual([]);
     expect(h.layers[0].points).toEqual([]);
   });
-  it("centralHub is centred", () => {
-    const c = centralHub();
-    expect(c.cx).toBe(0); expect(c.cy).toBe(0);
-  });
   it("layers and entities get unique ids", () => {
-    const a = defaultLayer("A", ""), b = defaultLayer("B", "");
-    expect(a.id).not.toBe(b.id);
-    expect(a.regions[0].id).not.toBe(b.regions[0].id);
+    expect(defaultLayer("X", "").id).not.toBe(defaultLayer("Y", "").id);
+    const h = defaultHive(); const L = h.layers[0];
+    const a = addWedge(h, L.id, { name: "A" });
+    const b = addWedge(h, L.id, { name: "B" });
+    expect(a).not.toBe(b);
   });
 });
 
@@ -52,15 +48,19 @@ describe("migrate", () => {
     expect(w.color).toBeTruthy();
     expect(w.name).toBeTruthy();
   });
+  it("preserves a finite updatedAt and defaults it to null", () => {
+    expect(migrate({ layers: [{ regions: [], points: [] }], updatedAt: 123 }).updatedAt).toBe(123);
+    expect(migrate({ layers: [{ regions: [], points: [] }] }).updatedAt).toBe(null);
+  });
 });
 
 describe("layer CRUD", () => {
-  it("addLayer appends a layer with a central hub and returns its id", () => {
+  it("addLayer appends an empty layer and returns its id", () => {
     const h = defaultHive();
     const id = addLayer(h, "Underhive", "Depths");
     expect(h.layers).toHaveLength(2);
     expect(layerById(h, id).name).toBe("Underhive");
-    expect(layerById(h, id).regions[0].name).toBe("Spinal Transit");
+    expect(layerById(h, id).regions).toEqual([]);
   });
   it("removeLayer drops a layer but never the last one", () => {
     const h = defaultHive();
@@ -96,16 +96,35 @@ describe("entity CRUD", () => {
     expect(findEntity(L, pid).type).toBe("point");
     expect(L.points).toHaveLength(1);
   });
-  it("rename, recolour and remove operate on regions or points", () => {
+  it("rename, setColor and remove operate on regions or points", () => {
     const h = defaultHive(); const L = h.layers[0];
+    const cid = addCircle(h, L.id, { name: "Zone", cx: 0, cy: 0, r: 0.2 });
     const pid = addPoint(h, L.id, { name: "Old", x: 0, y: 0 });
     expect(renameEntity(L, pid, "New")).toBe(true);
     expect(findEntity(L, pid).name).toBe("New");
-    const hub = L.regions[0];
-    const before = hub.color;
-    expect(recolour(L, hub.id)).not.toBe(before);
+    expect(setColor(L, cid, "#abcdef")).toBe(true);
+    expect(findEntity(L, cid).color).toBe("#abcdef");
+    expect(setColor(L, pid, "#abcdef")).toBe(false);   // points have no colour
     expect(removeEntity(L, pid)).toBe(true);
     expect(L.points).toHaveLength(0);
+  });
+});
+
+describe("z-order", () => {
+  it("bringToFront moves a region to the end (top) of the array", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const a = addWedge(h, L.id, { name: "A" });
+    const b = addWedge(h, L.id, { name: "B" });
+    expect(L.regions[L.regions.length - 1].id).toBe(b);
+    expect(bringToFront(L, a)).toBe(true);
+    expect(L.regions[L.regions.length - 1].id).toBe(a);
+  });
+  it("sendToBack moves a region to the start (bottom) of the array", () => {
+    const h = defaultHive(); const L = h.layers[0];
+    const a = addWedge(h, L.id, { name: "A" });
+    const b = addWedge(h, L.id, { name: "B" });
+    expect(sendToBack(L, b)).toBe(true);
+    expect(L.regions[0].id).toBe(b);
   });
 });
 
@@ -114,11 +133,6 @@ describe("invariants and edge cases", () => {
     const h = defaultHive();
     const b = addLayer(h, "B", "");
     expect(moveLayer(h, b, 1)).toBe(false);   // already last
-  });
-  it("recolour returns null for a landmark point", () => {
-    const h = defaultHive(); const L = h.layers[0];
-    const pid = addPoint(h, L.id, { name: "Cathedral", x: 0, y: 0 });
-    expect(recolour(L, pid)).toBe(null);
   });
   it("addWedge fills safe defaults when geometry is omitted", () => {
     const h = defaultHive(); const L = h.layers[0];

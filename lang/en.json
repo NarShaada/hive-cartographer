@@ -9,6 +9,8 @@
   "HIVECART.Landmark": "Landmark",
   "HIVECART.Rename": "Rename Selected",
   "HIVECART.Recolour": "Recolour Selected",
+  "HIVECART.Front": "Bring to Front",
+  "HIVECART.Back": "Send to Back",
   "HIVECART.Delete": "Delete Selected",
   "HIVECART.AddLayer": "Add Layer",
   "HIVECART.LayerUp": "Move Layer Up",
@@ -20,9 +22,5 @@
   "HIVECART.PromptDistrict": "Name the district:",
   "HIVECART.PromptZone": "Name the zone:",
   "HIVECART.PromptLandmark": "Name the landmark:",
-  "HIVECART.PromptLayer": "Name the layer:",
-  "HIVECART.HintSelect": "Click to select. Drag the body to move (districts rotate; zones/landmarks slide). Drag the gold handles to resize.",
-  "HIVECART.HintDistrict": "Press near the centre and drag around — sweep sets the width, distance sets the radius. Release to name it.",
-  "HIVECART.HintZone": "Press where you want the centre and drag outward to set the radius.",
-  "HIVECART.HintLandmark": "Click any spot to drop a named marker."
+  "HIVECART.PromptLayer": "Name the layer:"
 }
