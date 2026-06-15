@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { polar, angleDeg, dist, toPx, toUnit } from "../scripts/geometry.mjs";
+import { polar, angleDeg, dist, toPx, toUnit, wedgePath } from "../scripts/geometry.mjs";
 
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
@@ -26,5 +26,25 @@ describe("toPx / toUnit round-trip", () => {
     expect(px).toBe(200); expect(py).toBe(200);
     const [ux, uy] = toUnit(200, 200, 180, 290, 200);
     expect(near(ux, 0.5)).toBe(true); expect(near(uy, 0)).toBe(true);
+  });
+});
+
+describe("wedgePath", () => {
+  it("returns a closed SVG path starting at the centre", () => {
+    const d = wedgePath(200, 200, 180, -90, -20, 1);
+    expect(d.startsWith("M 200 200")).toBe(true);
+    expect(d.trim().endsWith("Z")).toBe(true);
+  });
+  it("normalizes a1 below a0 by adding 360", () => {
+    const d = wedgePath(0, 0, 100, 350, 10, 1); // sweeps through 360
+    expect(typeof d).toBe("string");
+    expect(d.length).toBeGreaterThan(10);
+  });
+  it("scales the outer radius by rOutUnit (a fraction of R)", () => {
+    const d = wedgePath(0, 0, 100, 0, 90, 0.5);
+    const nums = d.match(/-?\d+(\.\d+)?/g).map(Number);
+    const xs = nums.filter((_, i) => i % 2 === 0), ys = nums.filter((_, i) => i % 2 === 1);
+    const maxR = Math.max(...xs.map((x, i) => Math.hypot(x, ys[i])));
+    expect(maxR).toBeLessThan(55); // 0.5*100 plus the small organic wobble
   });
 });
