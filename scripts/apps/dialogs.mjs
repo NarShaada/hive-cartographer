@@ -10,9 +10,10 @@ const L = (k) => game.i18n.localize(k);
 export async function promptText({ title, label, value = "" }) {
   const v = await DialogV2.prompt({
     window: { title },
-    content: `<div class="hc-dialog"><label>${esc(label)}</label><input type="text" name="value" value="${esc(value)}" autofocus/></div>`,
+    content: `<div class="hc-dialog"><label>${esc(label)}</label><input type="text" name="value" value="${esc(value)}"/></div>`,
     ok: { label: L("HIVECART.OK"), callback: (e, button) => button.form.elements.value.value.trim() },
     rejectClose: false,
+    render: (e, dialog) => { const i = dialog.element.querySelector('input[name="value"]'); if (i) { i.focus(); i.select(); } },
   });
   return v || null;
 }
@@ -23,7 +24,7 @@ export async function promptNewMap() {
     window: { title: L("HIVECART.NewMapTitle") },
     content: `<div class="hc-dialog">`
       + `<label>${L("HIVECART.Map")}</label>`
-      + `<input type="text" name="name" value="New Map" autofocus/>`
+      + `<input type="text" name="name" value="New Map"/>`
       + `<label class="hc-check"><input type="checkbox" name="single"/> ${L("HIVECART.SingleLayer")}</label>`
       + `</div>`,
     ok: { label: L("HIVECART.OK"), callback: (e, button) => {
@@ -31,6 +32,7 @@ export async function promptNewMap() {
       return name ? { name, singleLayer: f.single.checked } : null;
     } },
     rejectClose: false,
+    render: (e, dialog) => { const i = dialog.element.querySelector('input[name="name"]'); if (i) { i.focus(); i.select(); } },
   });
   return res || null;
 }
