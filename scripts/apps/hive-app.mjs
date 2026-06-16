@@ -4,6 +4,7 @@ import { foundryAdapter, MODULE_ID } from "../hive-cartographer.mjs";
 import { renderCrossSection } from "./cross-section.mjs";
 import { createDiskEditor } from "./disk-editor.mjs";
 import * as M from "../data/hive-model.mjs";
+import { promptText, promptNewMap, promptColour } from "./dialogs.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -44,7 +45,6 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     root.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener("click", () => this.#setMode(b.dataset.mode)));
     root.querySelectorAll('[data-act]').forEach((b) => b.addEventListener("click", () => this.#action(b.dataset.act)));
     root.querySelector('[data-hc="mapSelect"]').addEventListener("change", (e) => { this.#curMapId = e.target.value; this.#cur = 0; this.#sel = null; this.#renderAll(); });
-    root.querySelector('[data-hc="singleLayer"]').addEventListener("change", (e) => { M.setSingleLayer(this.doc, this.#curMapId, e.target.checked); this.#cur = 0; this.#sel = null; this.#persist(); this.#renderAll(); });
     // disk editor (destroy any prior instance's window listeners first)
     this.#disk?.destroy();
     this.#disk = createDiskEditor(root.querySelector('[data-hc="disk"]'), this.#ctx());
@@ -106,7 +106,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (e) fn(e);
         if (persist) this.#persist();
       },
-      promptName: (key, dflt) => { const v = prompt(game.i18n.localize(key), dflt); return v && v.trim() ? v.trim() : null; },
+      promptName: (key, dflt) => promptText({ title: game.i18n.localize("HIVECART.Title"), label: game.i18n.localize(key), value: dflt }),
       nextColor: () => M.PALETTE[this.#colorN++ % M.PALETTE.length],
     };
   }
@@ -117,33 +117,27 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#renderAll();
   }
 
-  // Open the OS colour picker seeded with the entity's current colour; apply on change.
-  #pickColour() {
+  async #pickColour() {
     const L = this.layer(), e = this.#sel && M.findEntity(L, this.#sel);
     if (!e || e.color === undefined) return ui.notifications.warn("Pick a district or zone.");
-    const input = document.createElement("input");
-    input.type = "color"; input.value = /^#[0-9a-f]{6}$/i.test(e.color) ? e.color : "#7c4a3a";
-    input.style.cssText = "position:fixed;left:-9999px;";
-    document.body.appendChild(input);
-    input.addEventListener("change", () => { M.setColor(L, this.#sel, input.value); this.#persist(); this.#renderAll(); input.remove(); });
-    input.addEventListener("cancel", () => input.remove());
-    input.click();
+    const picked = await promptColour(e.color);
+    if (picked && this.element?.isConnected) { M.setColor(L, this.#sel, picked); this.#persist(); this.#renderAll(); }
   }
 
-  #action(act) {
+  async #action(act) {
     const L = this.layer();
-    if (act === "mapNew") { const n = prompt(game.i18n.localize("HIVECART.PromptMap"), "New Map"); if (!n) return; this.#curMapId = M.addMap(this.doc, n); this.#cur = 0; this.#sel = null; this.#persist(); this.#renderAll(); return; }
-    if (act === "mapRename") { const n = prompt(game.i18n.localize("HIVECART.PromptMap"), this.map().name); if (n) { M.renameMap(this.doc, this.#curMapId, n); this.#persist(); this.#renderAll(); } return; }
+    if (act === "mapNew") { const r = await promptNewMap(); if (!r || !this.element?.isConnected) return; this.#curMapId = M.addMap(this.doc, r.name, r.singleLayer); this.#cur = 0; this.#sel = null; this.#persist(); this.#renderAll(); return; }
+    if (act === "mapRename") { const n = await promptText({ title: game.i18n.localize("HIVECART.RenameMap"), label: game.i18n.localize("HIVECART.PromptMap"), value: this.map().name }); if (n && this.element?.isConnected) { M.renameMap(this.doc, this.#curMapId, n); this.#persist(); this.#renderAll(); } return; }
     if (act === "mapDelete") { if (M.removeMap(this.doc, this.#curMapId)) { this.#syncMap(); this.#sel = null; this.#persist(); this.#renderAll(); } else ui.notifications.warn("A world needs at least one map."); return; }
-    if (act === "rename") { const e = this.#sel && M.findEntity(L, this.#sel); if (!e) return ui.notifications.warn("Select something first."); const n = prompt("Rename:", e.name); if (n) { M.renameEntity(L, this.#sel, n); this.#persist(); this.#renderAll(); } }
+    if (act === "rename") { const e = this.#sel && M.findEntity(L, this.#sel); if (!e) return ui.notifications.warn("Select something first."); const n = await promptText({ title: game.i18n.localize("HIVECART.Rename"), label: game.i18n.localize("HIVECART.PromptRename"), value: e.name }); if (n && this.element?.isConnected) { M.renameEntity(L, this.#sel, n); this.#persist(); this.#renderAll(); } }
     else if (act === "recolour") { this.#pickColour(); }
     else if (act === "front") { if (this.#sel && M.bringToFront(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
     else if (act === "back") { if (this.#sel && M.sendToBack(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
     else if (act === "delete") { if (!this.#sel || !M.removeEntity(L, this.#sel)) return ui.notifications.warn("Select something first."); this.#sel = null; this.#persist(); this.#renderAll(); }
-    else if (act === "addLayer") { const n = prompt(game.i18n.localize("HIVECART.PromptLayer"), "New Layer"); if (!n) return; M.addLayer(this.map(), n, ""); this.#cur = this.map().layers.length - 1; this.#sel = null; this.#persist(); this.#renderAll(); }
+    else if (act === "addLayer") { const n = await promptText({ title: game.i18n.localize("HIVECART.AddLayer"), label: game.i18n.localize("HIVECART.PromptLayer"), value: "New Layer" }); if (!n || !this.element?.isConnected) return; M.addLayer(this.map(), n, ""); this.#cur = this.map().layers.length - 1; this.#sel = null; this.#persist(); this.#renderAll(); }
     else if (act === "layerUp") { if (M.moveLayer(this.map(), L.id, -1)) { this.#cur = Math.max(0, this.#cur - 1); this.#persist(); this.#renderAll(); } }
     else if (act === "layerDown") { if (M.moveLayer(this.map(), L.id, 1)) { this.#cur = Math.min(this.map().layers.length - 1, this.#cur + 1); this.#persist(); this.#renderAll(); } }
-    else if (act === "renameLayer") { const n = prompt(game.i18n.localize("HIVECART.PromptLayer"), L.name); if (n) { L.name = n; this.#persist(); this.#renderAll(); } }
+    else if (act === "renameLayer") { const n = await promptText({ title: game.i18n.localize("HIVECART.RenameLayer"), label: game.i18n.localize("HIVECART.PromptLayer"), value: L.name }); if (n && this.element?.isConnected) { L.name = n; this.#persist(); this.#renderAll(); } }
     else if (act === "removeLayer") { if (M.removeLayer(this.map(), L.id)) { this.#cur = Math.max(0, this.#cur - 1); this.#sel = null; this.#persist(); this.#renderAll(); } else ui.notifications.warn("A map needs at least one layer."); }
   }
 
@@ -163,7 +157,6 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #renderMapBar(root, map) {
     const sel = root.querySelector('[data-hc="mapSelect"]');
     sel.innerHTML = this.doc.maps.map((m) => `<option value="${m.id}"${m.id === map.id ? " selected" : ""}>${esc(m.name)}</option>`).join("");
-    root.querySelector('[data-hc="singleLayer"]').checked = !!map.singleLayer;
     root.querySelector(".hive-cart").classList.toggle("hc-single", !!map.singleLayer);
   }
 

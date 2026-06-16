@@ -64,12 +64,12 @@ export function createDiskEditor(container, ctx) {
     container.classList.toggle("draw", gm && !selectMode);
   }
 
-  function onDown(e) {
+  async function onDown(e) {
     if (!ctx.isGM() || !svgEl()) return;
     const mode = ctx.getMode();
     if (mode !== "select") {
       const p = toViewbox(e), [ux, uy] = unit(p); e.preventDefault();
-      if (mode === "point") { const name = ctx.promptName("HIVECART.PromptLandmark", "New Landmark"); if (name) ctx.addPoint({ name, x: ux, y: uy }); return; }
+      if (mode === "point") { const name = await ctx.promptName("HIVECART.PromptLandmark", "New Landmark"); if (name) ctx.addPoint({ name, x: ux, y: uy }); return; }
       if (mode === "wedge") { const a = angleDeg(0, 0, ux, uy); drag = { kind: "wedge", start: a, a0: a, a1: a + 1, rOut: Math.min(1, Math.max(0.3, Math.hypot(ux, uy))) }; }
       if (mode === "circle") { drag = { kind: "circle", cx: ux, cy: uy, r: 0.03 }; }
       return;
@@ -114,13 +114,13 @@ export function createDiskEditor(container, ctx) {
     }
   }
 
-  function onUp() {
+  async function onUp() {
     if (selDrag) { selDrag = null; ctx.mutateSelected(() => {}, { persist: true }); return; }
     if (!drag) return;
     const d = drag; drag = null;
-    if (d.kind === "wedge" && (d.a1 - d.a0) >= 8) { const name = ctx.promptName("HIVECART.PromptDistrict", "New District"); if (name) ctx.addWedge({ name, color: ctx.nextColor(), a0: d.a0, a1: d.a1, rOut: d.rOut }); }
-    if (d.kind === "circle" && d.r >= 0.05) { const name = ctx.promptName("HIVECART.PromptZone", "New Zone"); if (name) ctx.addCircle({ name, color: ctx.nextColor(), cx: d.cx, cy: d.cy, r: d.r }); }
-    render();
+    render();   // clear the live preview before the (now modal) name dialog
+    if (d.kind === "wedge" && (d.a1 - d.a0) >= 8) { const name = await ctx.promptName("HIVECART.PromptDistrict", "New District"); if (name) ctx.addWedge({ name, color: ctx.nextColor(), a0: d.a0, a1: d.a1, rOut: d.rOut }); }
+    if (d.kind === "circle" && d.r >= 0.05) { const name = await ctx.promptName("HIVECART.PromptZone", "New Zone"); if (name) ctx.addCircle({ name, color: ctx.nextColor(), cx: d.cx, cy: d.cy, r: d.r }); }
   }
 
   container.addEventListener("mousedown", onDown);
