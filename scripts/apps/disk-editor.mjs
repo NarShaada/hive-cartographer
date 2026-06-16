@@ -19,15 +19,17 @@ function regionLabel(rg) {
   // edge — curved text along a per-type edge path
   let d;
   if (rg.type === "wedge") {
-    const a0 = rg.a0, a1 = rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1, rr = rg.rOut * Rp;
+    // Arc pulled in to 0.85·rOut so the outward-extending glyphs sit ON the coloured slice (not past the rim).
+    const a0 = rg.a0, a1 = rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1, rr = rg.rOut * Rp * 0.85;
     const [sx, sy] = polar(CXp, CYp, rr, a0), [ex, ey] = polar(CXp, CYp, rr, a1);
     d = `M ${sx} ${sy} A ${rr} ${rr} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${ex} ${ey}`;
   } else if (rg.type === "rect") {
     const y = CYp + (rg.cy + rg.hh) * Rp;
     d = `M ${CXp + (rg.cx - rg.hw) * Rp} ${y} L ${CXp + (rg.cx + rg.hw) * Rp} ${y}`;
   } else {
+    // Bottom arc (sweep 0): traversed L→R along the bottom so glyphs sit inside, upright.
     const cx = CXp + rg.cx * Rp, cy = CYp + rg.cy * Rp, rr = rg.r * Rp;
-    d = `M ${cx - rr} ${cy} A ${rr} ${rr} 0 0 1 ${cx + rr} ${cy}`;
+    d = `M ${cx - rr} ${cy} A ${rr} ${rr} 0 0 0 ${cx + rr} ${cy}`;
   }
   return `<path id="lblpath-${rg.id}" d="${d}" fill="none" stroke="none"/>`
     + `<text class="${cls}"><textPath href="#lblpath-${rg.id}" startOffset="50%" text-anchor="middle">${esc(rg.name)}</textPath></text>`;
