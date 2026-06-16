@@ -82,15 +82,12 @@
    staggered cycle, so the readout feels alive without constant, eye-tiring motion. Labels carry
    pointer-events:none, so this never affects drawing/selection. Stagger comes from inline
    animation-delay set per label in JS. */
-.hive-cart.hc-fx .hc-rlabel,
-.hive-cart.hc-fx .hc-clabel,
-.hive-cart.hc-fx .hc-plabel,
-.hive-cart.hc-fx .hc-chip b{animation:hc-glitch 5s steps(1,end) infinite;}
+.hive-cart .hc-glitching{animation:hc-glitch .45s steps(1,end);}
 @keyframes hc-glitch{
-  0%,8%,100%{transform:translate(0);filter:none;opacity:1;}
-  1%{transform:translate(-2px,0);filter:drop-shadow(2px 0 #ff2d55) drop-shadow(-2px 0 #16e0ff);}
-  3%{transform:translate(2px,1px);opacity:.8;filter:drop-shadow(-2px 0 #ff2d55) drop-shadow(2px 0 #16e0ff);}
-  5%{transform:translate(-1px,0);filter:drop-shadow(1px 0 #ff2d55) drop-shadow(-1px 0 #16e0ff);}
-  6.5%{transform:translate(1px,0);filter:none;}
+  0%,100%{transform:translate(0);filter:none;opacity:1;}
+  15%{transform:translate(-2px,0);filter:drop-shadow(2px 0 #ff2d55) drop-shadow(-2px 0 #16e0ff);}
+  38%{transform:translate(2px,1px);opacity:.8;filter:drop-shadow(-2px 0 #ff2d55) drop-shadow(2px 0 #16e0ff);}
+  60%{transform:translate(-1px,0);filter:drop-shadow(1px 0 #ff2d55) drop-shadow(-1px 0 #16e0ff);}
+  82%{transform:translate(1px,0);filter:none;}
 }
-@media (prefers-reduced-motion: reduce){.hive-cart.hc-fx .hc-rlabel,.hive-cart.hc-fx .hc-clabel,.hive-cart.hc-fx .hc-plabel,.hive-cart.hc-fx .hc-chip b{animation:none;}}
+@media (prefers-reduced-motion: reduce){.hive-cart .hc-glitching{animation:none;}}

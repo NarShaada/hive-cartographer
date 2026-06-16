@@ -30,13 +30,10 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
   };
   static PARTS = { body: { template: `modules/${MODULE_ID}/templates/hive-app.hbs` } };
 
-  #cur = 0; #sel = null; #mode = "select"; #disk = null; #unsub = null; #colorN = 0;
+  #cur = 0; #sel = null; #mode = "select"; #disk = null; #unsub = null; #colorN = 0; #fxTimer = null;
 
   async _prepareContext() {
-    return {
-      roleClass: game.user.isGM ? "gm" : "player",
-      fxClass: game.settings.get(MODULE_ID, "screenFx") ? "hc-fx" : "",
-    };
+    return { roleClass: game.user.isGM ? "gm" : "player" };
   }
 
   _onRender() {
@@ -53,9 +50,34 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // live sync: re-render when the world setting changes on any client
     this.#unsub?.();
     this.#unsub = subscribe(() => { this.model = loadHive(foundryAdapter); this.#renderAll(); });
+    this.#startFx();
   }
 
-  _onClose() { this.#unsub?.(); this.#disk?.destroy(); }
+  _onClose() { this.#unsub?.(); this.#disk?.destroy(); this.#stopFx(); }
+
+  // Cogitator glitch: every 3–6s (random), glitch a random 3–5 labels. Gated by the client setting.
+  #startFx() {
+    this.#stopFx();
+    const tick = () => {
+      this.#fxTimer = setTimeout(() => {
+        if (this.element?.isConnected && game.settings.get(MODULE_ID, "screenFx")) this.#glitchBurst();
+        tick();
+      }, 3000 + Math.random() * 3000);
+    };
+    tick();
+  }
+
+  #stopFx() { if (this.#fxTimer) { clearTimeout(this.#fxTimer); this.#fxTimer = null; } }
+
+  #glitchBurst() {
+    const labels = [...this.element.querySelectorAll(".hc-rlabel,.hc-clabel,.hc-plabel,.hc-chip b")];
+    if (!labels.length) return;
+    for (let i = labels.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [labels[i], labels[j]] = [labels[j], labels[i]]; }
+    for (const el of labels.slice(0, Math.min(labels.length, 3 + Math.floor(Math.random() * 3)))) {
+      el.classList.add("hc-glitching");
+      el.addEventListener("animationend", () => el.classList.remove("hc-glitching"), { once: true });
+    }
+  }
 
   layer() { return this.model.layers[this.#cur]; }
 
