@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { defaultHive, defaultMap, defaultLayer, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
-import { mapById, addMap, removeMap, renameMap, setSingleLayer } from "../scripts/data/hive-model.mjs";
+import { mapById, addMap, removeMap, renameMap } from "../scripts/data/hive-model.mjs";
 import { addLayer, removeLayer, moveLayer, layerById } from "../scripts/data/hive-model.mjs";
 import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, setColor, bringToFront, sendToBack, PALETTE } from "../scripts/data/hive-model.mjs";
 
@@ -62,12 +62,18 @@ describe("migrate", () => {
 });
 
 describe("map CRUD", () => {
-  it("addMap appends a map (with one layer) and returns its id", () => {
+  it("addMap appends a map (with one layer), defaults singleLayer false, returns its id", () => {
     const d = defaultHive();
     const id = addMap(d, "Underhive");
     expect(d.maps).toHaveLength(2);
     expect(mapById(d, id).name).toBe("Underhive");
     expect(mapById(d, id).layers).toHaveLength(1);
+    expect(mapById(d, id).singleLayer).toBe(false);
+  });
+  it("addMap stores the singleLayer flag passed at creation", () => {
+    const d = defaultHive();
+    const id = addMap(d, "Flat", true);
+    expect(mapById(d, id).singleLayer).toBe(true);
   });
   it("removeMap drops a map but never the last one", () => {
     const d = defaultHive();
@@ -77,13 +83,11 @@ describe("map CRUD", () => {
     expect(removeMap(d, d.maps[0].id)).toBe(false);
     expect(d.maps).toHaveLength(1);
   });
-  it("renameMap and setSingleLayer mutate the named map", () => {
+  it("renameMap mutates the named map; false for an unknown id", () => {
     const d = defaultHive(); const id = d.maps[0].id;
     expect(renameMap(d, id, "Renamed")).toBe(true);
     expect(mapById(d, id).name).toBe("Renamed");
-    expect(setSingleLayer(d, id, true)).toBe(true);
-    expect(mapById(d, id).singleLayer).toBe(true);
-    expect(setSingleLayer(d, "nope", true)).toBe(false);
+    expect(renameMap(d, "nope", "X")).toBe(false);
   });
 });
 

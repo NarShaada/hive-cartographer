@@ -77,8 +77,9 @@ export function mapById(doc, id) {
   return doc.maps.find((m) => m.id === id) || null;
 }
 
-export function addMap(doc, name) {
+export function addMap(doc, name, singleLayer = false) {
   const m = defaultMap(name || "New Map");
+  m.singleLayer = !!singleLayer;
   doc.maps.push(m);
   return m.id;
 }
@@ -94,11 +95,6 @@ export function removeMap(doc, id) {
 export function renameMap(doc, id, name) {
   const m = mapById(doc, id); if (!m) return false;
   m.name = name; return true;
-}
-
-export function setSingleLayer(doc, id, flag) {
-  const m = mapById(doc, id); if (!m) return false;
-  m.singleLayer = !!flag; return true;
 }
 
 /* ---- map-scoped (layers). First arg is a Map (has .layers). ---- */
