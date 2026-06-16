@@ -24,15 +24,18 @@ function regionLabel(rg) {
     const [sx, sy] = polar(CXp, CYp, rr, a0), [ex, ey] = polar(CXp, CYp, rr, a1);
     d = `M ${sx} ${sy} A ${rr} ${rr} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${ex} ${ey}`;
   } else if (rg.type === "rect") {
-    const y = CYp + (rg.cy + rg.hh) * Rp;
+    // Inset to 0.82·hh so the text clears the bottom stroke rather than blending into it.
+    const y = CYp + (rg.cy + rg.hh * 0.82) * Rp;
     d = `M ${CXp + (rg.cx - rg.hw) * Rp} ${y} L ${CXp + (rg.cx + rg.hw) * Rp} ${y}`;
   } else {
-    // Bottom arc (sweep 0): traversed L→R along the bottom so glyphs sit inside, upright.
-    const cx = CXp + rg.cx * Rp, cy = CYp + rg.cy * Rp, rr = rg.r * Rp;
+    // Bottom arc (sweep 0) at 0.82·r so glyphs sit inside, upright, clear of the rim stroke.
+    const cx = CXp + rg.cx * Rp, cy = CYp + rg.cy * Rp, rr = rg.r * Rp * 0.82;
     d = `M ${cx - rr} ${cy} A ${rr} ${rr} 0 0 0 ${cx + rr} ${cy}`;
   }
+  // Wedge text faces outward (toward the rim) — `side="right"` flips the glyph side without reversing reading order.
+  const side = rg.type === "wedge" ? ` side="right"` : "";
   return `<path id="lblpath-${rg.id}" d="${d}" fill="none" stroke="none"/>`
-    + `<text class="${cls}"><textPath href="#lblpath-${rg.id}" startOffset="50%" text-anchor="middle">${esc(rg.name)}</textPath></text>`;
+    + `<text class="${cls}"><textPath href="#lblpath-${rg.id}"${side} startOffset="50%" text-anchor="middle">${esc(rg.name)}</textPath></text>`;
 }
 
 export function createDiskEditor(container, ctx) {
