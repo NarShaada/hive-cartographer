@@ -7,7 +7,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 // Label for a region honouring rg.labelPos ("center" | "edge" | "none"). Edge text follows a per-type
 // SVG path via <textPath> (wedge: outer arc; circle: bottom arc; rect: bottom line).
 function regionLabel(rg) {
-  const pos = rg.labelPos === "edge" || rg.labelPos === "none" ? rg.labelPos : "center";
+  const pos = ["edge", "edgeOut", "none"].includes(rg.labelPos) ? rg.labelPos : "center";
   if (pos === "none") return "";
   const cls = rg.type === "wedge" ? "hc-rlabel" : "hc-clabel";
   if (pos === "center") {
@@ -32,8 +32,8 @@ function regionLabel(rg) {
     const cx = CXp + rg.cx * Rp, cy = CYp + rg.cy * Rp, rr = rg.r * Rp * 0.82;
     d = `M ${cx - rr} ${cy} A ${rr} ${rr} 0 0 0 ${cx + rr} ${cy}`;
   }
-  // Wedge text faces outward (toward the rim) — `side="right"` flips the glyph side without reversing reading order.
-  const side = rg.type === "wedge" ? ` side="right"` : "";
+  // Wedge "edge" faces inward (top toward centre); "edgeOut" flips it outward via textPath side (no reversal).
+  const side = (rg.type === "wedge" && pos === "edgeOut") ? ` side="right"` : "";
   return `<path id="lblpath-${rg.id}" d="${d}" fill="none" stroke="none"/>`
     + `<text class="${cls}"><textPath href="#lblpath-${rg.id}"${side} startOffset="50%" text-anchor="middle">${esc(rg.name)}</textPath></text>`;
 }

@@ -33,7 +33,7 @@ function fixWedge(r) {
     name: r.name || "District", color: r.color || PALETTE[0],
     a0: Number.isFinite(r.a0) ? r.a0 : 0, a1: Number.isFinite(r.a1) ? r.a1 : 90, rOut: Number.isFinite(r.rOut) ? r.rOut : 1,
     description: r.description || "",
-    labelPos: (r.labelPos === "edge" || r.labelPos === "none") ? r.labelPos : "center",
+    labelPos: ["edge", "edgeOut", "none"].includes(r.labelPos) ? r.labelPos : "center",
   };
 }
 function fixCircle(r) {
@@ -42,7 +42,7 @@ function fixCircle(r) {
     name: r.name || "Zone", color: r.color || PALETTE[1],
     cx: Number(r.cx) || 0, cy: Number(r.cy) || 0, r: Number.isFinite(r.r) ? r.r : 0.15,
     description: r.description || "",
-    labelPos: (r.labelPos === "edge" || r.labelPos === "none") ? r.labelPos : "center",
+    labelPos: ["edge", "edgeOut", "none"].includes(r.labelPos) ? r.labelPos : "center",
   };
 }
 function fixPoint(p) {
@@ -55,7 +55,7 @@ function fixRect(r) {
     cx: Number(r.cx) || 0, cy: Number(r.cy) || 0,
     hw: Number.isFinite(r.hw) ? r.hw : 0.15, hh: Number.isFinite(r.hh) ? r.hh : 0.15,
     description: r.description || "",
-    labelPos: (r.labelPos === "edge" || r.labelPos === "none") ? r.labelPos : "center",
+    labelPos: ["edge", "edgeOut", "none"].includes(r.labelPos) ? r.labelPos : "center",
   };
 }
 function fixLayer(L) {
@@ -198,13 +198,16 @@ export function setDescription(layer, id, text) {
   e.description = text; return true;
 }
 
-const LABEL_POS = ["center", "edge", "none"];
-// Advance a region's label placement center→edge→none→center. False for an unknown id or a landmark.
+// Wedges get a second edge orientation (edgeOut = text facing outward); circles/rects have one edge.
+const WEDGE_LABEL_CYCLE = ["center", "edge", "edgeOut", "none"];
+const REGION_LABEL_CYCLE = ["center", "edge", "none"];
+// Advance a region's label placement (cycle depends on type). False for an unknown id or a landmark.
 export function cycleLabelPos(layer, id) {
   const e = findEntity(layer, id);
   if (!e || e.type === "point") return false;
-  const i = Math.max(0, LABEL_POS.indexOf(e.labelPos));
-  e.labelPos = LABEL_POS[(i + 1) % LABEL_POS.length];
+  const cyc = e.type === "wedge" ? WEDGE_LABEL_CYCLE : REGION_LABEL_CYCLE;
+  const i = Math.max(0, cyc.indexOf(e.labelPos));
+  e.labelPos = cyc[(i + 1) % cyc.length];
   return e.labelPos;
 }
 

@@ -187,4 +187,12 @@ describe("label placement", () => {
     const pid = addPoint(map, L.id, { name: "P", x: 0, y: 0 });
     expect(cycleLabelPos(L, pid)).toBe(false);
   });
+  it("wedge label cycle adds edgeOut: center→edge→edgeOut→none→center", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const wid = addWedge(map, L.id, { name: "W" });
+    expect(cycleLabelPos(L, wid)).toBe("edge");
+    expect(cycleLabelPos(L, wid)).toBe("edgeOut");
+    expect(cycleLabelPos(L, wid)).toBe("none");
+    expect(cycleLabelPos(L, wid)).toBe("center");
+  });
 });
