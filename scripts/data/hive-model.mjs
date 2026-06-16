@@ -1,7 +1,8 @@
 // scripts/data/hive-model.mjs
-// Pure data model for a hive. No Foundry, no DOM. Geometry is normalized (see plan conventions).
+// Pure data model. No Foundry, no DOM. Geometry is normalized (positions -1..1, radii 0..1, angles deg).
+// Top level is a document: { version, maps:[Map] }. Map: { id, name, singleLayer, updatedAt, layers:[Layer] }.
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const PALETTE = ["#7c4a3a", "#4f6b5e", "#8a7338", "#54637a", "#6e4258", "#5d6b3a", "#7a5a3c", "#436a72"];
 
 let _seq = 0;
@@ -14,8 +15,12 @@ export function defaultLayer(name, sub) {
   return { id: newId("L"), name, sub: sub || "", regions: [], points: [] };
 }
 
+export function defaultMap(name) {
+  return { id: newId("M"), name: name || "New Map", singleLayer: false, updatedAt: null, layers: [defaultLayer("Surface", "")] };
+}
+
 export function defaultHive() {
-  return { version: SCHEMA_VERSION, name: "New Hive", updatedAt: null, layers: [defaultLayer("Surface", "")] };
+  return { version: SCHEMA_VERSION, maps: [defaultMap("New Map")] };
 }
 
 export function serialize(model) {
@@ -45,62 +50,105 @@ function fixLayer(L) {
   const points = Array.isArray(L.points) ? L.points.map(fixPoint) : [];
   return { id: L.id || newId("L"), name: L.name || "Layer", sub: L.sub || "", regions, points };
 }
-
-export function migrate(raw) {
-  if (!raw || typeof raw !== "object" || !Array.isArray(raw.layers) || raw.layers.length === 0) {
-    return defaultHive();
-  }
+function fixMap(m) {
+  const layers = Array.isArray(m.layers) && m.layers.length ? m.layers.map(fixLayer) : [defaultLayer("Surface", "")];
   return {
-    version: SCHEMA_VERSION, name: raw.name || "Hive",
-    updatedAt: Number.isFinite(raw.updatedAt) ? raw.updatedAt : null,
-    layers: raw.layers.map(fixLayer),
+    id: m.id || newId("M"), name: m.name || "Map",
+    singleLayer: !!m.singleLayer,
+    updatedAt: Number.isFinite(m.updatedAt) ? m.updatedAt : null,
+    layers,
   };
 }
 
-export function layerById(model, id) {
-  return model.layers.find((L) => L.id === id) || null;
+export function migrate(raw) {
+  if (!raw || typeof raw !== "object") return defaultHive();
+  if (Array.isArray(raw.maps) && raw.maps.length) {
+    return { version: SCHEMA_VERSION, maps: raw.maps.map(fixMap) };
+  }
+  if (Array.isArray(raw.layers) && raw.layers.length) {
+    return { version: SCHEMA_VERSION, maps: [fixMap({ name: raw.name || "Hive", updatedAt: raw.updatedAt, layers: raw.layers })] };
+  }
+  return defaultHive();
 }
 
-export function addLayer(model, name, sub) {
+/* ---- document-scoped (maps) ---- */
+
+export function mapById(doc, id) {
+  return doc.maps.find((m) => m.id === id) || null;
+}
+
+export function addMap(doc, name) {
+  const m = defaultMap(name || "New Map");
+  doc.maps.push(m);
+  return m.id;
+}
+
+export function removeMap(doc, id) {
+  if (doc.maps.length <= 1) return false;
+  const i = doc.maps.findIndex((m) => m.id === id);
+  if (i < 0) return false;
+  doc.maps.splice(i, 1);
+  return true;
+}
+
+export function renameMap(doc, id, name) {
+  const m = mapById(doc, id); if (!m) return false;
+  m.name = name; return true;
+}
+
+export function setSingleLayer(doc, id, flag) {
+  const m = mapById(doc, id); if (!m) return false;
+  m.singleLayer = !!flag; return true;
+}
+
+/* ---- map-scoped (layers). First arg is a Map (has .layers). ---- */
+
+export function layerById(map, id) {
+  return map.layers.find((L) => L.id === id) || null;
+}
+
+export function addLayer(map, name, sub) {
   const L = defaultLayer(name || "New Layer", sub || "");
-  model.layers.push(L);
+  map.layers.push(L);
   return L.id;
 }
 
-export function removeLayer(model, id) {
-  if (model.layers.length <= 1) return false;
-  const i = model.layers.findIndex((L) => L.id === id);
+export function removeLayer(map, id) {
+  if (map.layers.length <= 1) return false;
+  const i = map.layers.findIndex((L) => L.id === id);
   if (i < 0) return false;
-  model.layers.splice(i, 1);
+  map.layers.splice(i, 1);
   return true;
 }
 
-// dir: -1 = up (towards index 0 / top of hive), +1 = down.
-export function moveLayer(model, id, dir) {
-  const i = model.layers.findIndex((L) => L.id === id);
+// dir: -1 = up (towards index 0 / top), +1 = down.
+export function moveLayer(map, id, dir) {
+  const i = map.layers.findIndex((L) => L.id === id);
   const j = i + dir;
-  if (i < 0 || j < 0 || j >= model.layers.length) return false;
-  const [L] = model.layers.splice(i, 1);
-  model.layers.splice(j, 0, L);
+  if (i < 0 || j < 0 || j >= map.layers.length) return false;
+  const [L] = map.layers.splice(i, 1);
+  map.layers.splice(j, 0, L);
   return true;
 }
 
-export function addWedge(model, layerId, props) {
-  const L = layerById(model, layerId); if (!L) return null;
-  const w = fixWedge({ ...props });   // fills id, type, defaults, coerces numbers
+/* ---- entity ops. add* take a Map + layerId; the rest take a Layer. ---- */
+
+export function addWedge(map, layerId, props) {
+  const L = layerById(map, layerId); if (!L) return null;
+  const w = fixWedge({ ...props });
   L.regions.push(w);
   return w.id;
 }
 
-export function addCircle(model, layerId, props) {
-  const L = layerById(model, layerId); if (!L) return null;
+export function addCircle(map, layerId, props) {
+  const L = layerById(map, layerId); if (!L) return null;
   const c = fixCircle({ ...props });
   L.regions.push(c);
   return c.id;
 }
 
-export function addPoint(model, layerId, props) {
-  const L = layerById(model, layerId); if (!L) return null;
+export function addPoint(map, layerId, props) {
+  const L = layerById(map, layerId); if (!L) return null;
   const p = fixPoint({ ...props });
   L.points.push(p);
   return p.id;
@@ -122,14 +170,12 @@ export function renameEntity(layer, id, name) {
   e.name = name; return true;
 }
 
-// Set a region's colour to an explicit value. Points have no colour (returns false).
 export function setColor(layer, id, color) {
   const e = findEntity(layer, id);
   if (!e || e.color === undefined) return false;
   e.color = color; return true;
 }
 
-// Z-order within a layer (render order = array order). A region overlaps any region earlier in the array.
 export function bringToFront(layer, id) {
   const i = layer.regions.findIndex((r) => r.id === id);
   if (i < 0) return false;

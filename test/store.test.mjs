@@ -9,7 +9,7 @@ function fakeAdapter({ stored = null, gm = true } = {}) {
 
 describe("loadHive", () => {
   it("migrates whatever is stored into a valid hive", () => {
-    expect(loadHive(fakeAdapter({ stored: null })).layers).toHaveLength(1);
+    expect(loadHive(fakeAdapter({ stored: null })).maps).toHaveLength(1);
     const h = loadHive(fakeAdapter({ stored: { layers: [{ name: "X", regions: [], points: [] }] } }));
     expect(h.version).toBe(SCHEMA_VERSION);
   });
@@ -19,7 +19,7 @@ describe("saveHive", () => {
   it("writes serialized model when the user is GM", () => {
     const a = fakeAdapter({ gm: true });
     expect(saveHive(a, defaultHive())).toBe(true);
-    expect(a._peek().layers).toHaveLength(1);
+    expect(a._peek().maps).toHaveLength(1);
   });
   it("no-ops for non-GM users", () => {
     const a = fakeAdapter({ gm: false });
