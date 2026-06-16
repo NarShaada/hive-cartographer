@@ -18,6 +18,14 @@ Hooks.once("init", () => {
     default: {},                       // migrate() upgrades {} to a valid default hive on load
     onChange: (value) => notify(value), // fires on every client → open windows re-render
   });
+  // Per-user toggle for the subtle "cogitator screen" animation (purely cosmetic).
+  game.settings.register(MODULE_ID, "screenFx", {
+    name: "HIVECART.Setting.ScreenFx",
+    hint: "HIVECART.Setting.ScreenFxHint",
+    scope: "client", config: true, type: Boolean, default: true,
+    onChange: (v) => document.querySelectorAll(".hive-cart").forEach((el) => el.classList.toggle("hc-fx", v)),
+  });
+
   // Preload the window template so the first open renders immediately (not a blank frame).
   const tpl = `modules/${MODULE_ID}/templates/hive-app.hbs`;
   (foundry.applications?.handlebars?.loadTemplates ?? globalThis.loadTemplates)?.([tpl]);

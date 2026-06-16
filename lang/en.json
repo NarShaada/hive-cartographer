@@ -1,6 +1,8 @@
 {
   "HIVECART.Title": "Hive Cartographer",
   "HIVECART.OpenMap": "Hive Map",
+  "HIVECART.Setting.ScreenFx": "Cogitator screen effect",
+  "HIVECART.Setting.ScreenFxHint": "A subtle animated scanline/flicker on the Hive Map window. Purely cosmetic; per-user.",
   "HIVECART.CrossSection": "Vertical Cross-Section",
   "HIVECART.Tools": "Draw Tools",
   "HIVECART.Select": "Select",

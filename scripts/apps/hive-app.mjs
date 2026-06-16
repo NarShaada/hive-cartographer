@@ -33,7 +33,10 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #cur = 0; #sel = null; #mode = "select"; #disk = null; #unsub = null; #colorN = 0;
 
   async _prepareContext() {
-    return { roleClass: game.user.isGM ? "gm" : "player" };
+    return {
+      roleClass: game.user.isGM ? "gm" : "player",
+      fxClass: game.settings.get(MODULE_ID, "screenFx") ? "hc-fx" : "",
+    };
   }
 
   _onRender() {

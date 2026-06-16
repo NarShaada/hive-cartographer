@@ -77,3 +77,13 @@
 .hive-cart .hc-status{position:relative;z-index:6;display:flex;align-items:center;gap:9px;padding:5px 14px;border-top:1px solid var(--line);background:var(--bg2);font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--teal);}
 .hive-cart .hc-led{width:8px;height:8px;border-radius:50%;background:#62c39a;box-shadow:0 0 7px #62c39a;flex:0 0 auto;animation:hc-pulse 2.4s ease-in-out infinite;}
 @keyframes hc-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Optional "cogitator screen" FX (client setting). Gentle + pointer-safe: only scanline drift,
+   a faint flicker, and a slow UNIFORM scale/drift on the map (uniform scale keeps clicks accurate). */
+.hive-cart.hc-fx::after{animation:hc-scanroll 2.4s linear infinite;}
+.hive-cart.hc-fx{animation:hc-flicker 6.5s ease-in-out infinite;}
+.hive-cart.hc-fx .hc-disk svg{animation:hc-breathe 7.5s ease-in-out infinite;transform-origin:center;will-change:transform;}
+@keyframes hc-scanroll{from{background-position:0 0;}to{background-position:0 3px;}}
+@keyframes hc-flicker{0%,100%{opacity:1}43%{opacity:.985}57%{opacity:.993}}
+@keyframes hc-breathe{0%,100%{transform:scale(1) translateY(0);}50%{transform:scale(1.006) translateY(-1px);}}
+@media (prefers-reduced-motion: reduce){.hive-cart.hc-fx,.hive-cart.hc-fx::after,.hive-cart.hc-fx .hc-disk svg{animation:none;}}
