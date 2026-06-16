@@ -30,15 +30,15 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
   };
   static PARTS = { body: { template: `modules/${MODULE_ID}/templates/hive-app.hbs` } };
 
-  #cur = 0; #sel = null; #mode = "select"; #disk = null; #unsub = null; #colorN = 0; #fxTimer = null;
+  #cur = 0; #curMapId = null; #sel = null; #mode = "select"; #disk = null; #unsub = null; #colorN = 0; #fxTimer = null;
 
   async _prepareContext() {
     return { roleClass: game.user.isGM ? "gm" : "player" };
   }
 
   _onRender() {
-    this.model = loadHive(foundryAdapter);
-    if (this.#cur >= this.model.layers.length) this.#cur = 0;
+    this.doc = loadHive(foundryAdapter);
+    this.#syncMap();
     const root = this.element;
     // inspector buttons
     root.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener("click", () => this.#setMode(b.dataset.mode)));
@@ -49,7 +49,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#renderAll();
     // live sync: re-render when the world setting changes on any client
     this.#unsub?.();
-    this.#unsub = subscribe(() => { this.model = loadHive(foundryAdapter); this.#renderAll(); });
+    this.#unsub = subscribe(() => { this.doc = loadHive(foundryAdapter); this.#syncMap(); this.#renderAll(); });
     this.#startFx();
   }
 
@@ -79,7 +79,15 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
   }
 
-  layer() { return this.model.layers[this.#cur]; }
+  map() { return M.mapById(this.doc, this.#curMapId) || this.doc.maps[0]; }
+  layer() { return this.map().layers[this.#cur]; }
+
+  // Keep the per-user current map valid after load/sync, and clamp the layer index.
+  #syncMap() {
+    if (!M.mapById(this.doc, this.#curMapId)) this.#curMapId = this.doc.maps[0].id;
+    const map = this.map();
+    if (map.singleLayer || this.#cur >= map.layers.length || this.#cur < 0) this.#cur = 0;
+  }
 
   #ctx() {
     return {
@@ -88,9 +96,9 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
       getMode: () => this.#mode,
       isGM: () => game.user.isGM,
       select: (id) => { this.#sel = id; this.#renderInfo(); },
-      addWedge: (d) => { M.addWedge(this.model, this.layer().id, d); this.#persist(); this.#renderAll(); },
-      addCircle: (d) => { M.addCircle(this.model, this.layer().id, d); this.#persist(); this.#renderAll(); },
-      addPoint: (d) => { M.addPoint(this.model, this.layer().id, d); this.#persist(); this.#renderAll(); },
+      addWedge: (d) => { M.addWedge(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
+      addCircle: (d) => { M.addCircle(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
+      addPoint: (d) => { M.addPoint(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
       mutateSelected: (fn, { persist = true } = {}) => {
         const e = this.#sel && M.findEntity(this.layer(), this.#sel);
         if (e) fn(e);
@@ -127,22 +135,22 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     else if (act === "front") { if (this.#sel && M.bringToFront(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
     else if (act === "back") { if (this.#sel && M.sendToBack(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
     else if (act === "delete") { if (!this.#sel || !M.removeEntity(L, this.#sel)) return ui.notifications.warn("Select something first."); this.#sel = null; this.#persist(); this.#renderAll(); }
-    else if (act === "addLayer") { const n = prompt(game.i18n.localize("HIVECART.PromptLayer"), "New Layer"); if (!n) return; M.addLayer(this.model, n, ""); this.#cur = this.model.layers.length - 1; this.#sel = null; this.#persist(); this.#renderAll(); }
-    else if (act === "layerUp") { if (M.moveLayer(this.model, L.id, -1)) { this.#cur = Math.max(0, this.#cur - 1); this.#persist(); this.#renderAll(); } }
-    else if (act === "layerDown") { if (M.moveLayer(this.model, L.id, 1)) { this.#cur = Math.min(this.model.layers.length - 1, this.#cur + 1); this.#persist(); this.#renderAll(); } }
+    else if (act === "addLayer") { const n = prompt(game.i18n.localize("HIVECART.PromptLayer"), "New Layer"); if (!n) return; M.addLayer(this.map(), n, ""); this.#cur = this.map().layers.length - 1; this.#sel = null; this.#persist(); this.#renderAll(); }
+    else if (act === "layerUp") { if (M.moveLayer(this.map(), L.id, -1)) { this.#cur = Math.max(0, this.#cur - 1); this.#persist(); this.#renderAll(); } }
+    else if (act === "layerDown") { if (M.moveLayer(this.map(), L.id, 1)) { this.#cur = Math.min(this.map().layers.length - 1, this.#cur + 1); this.#persist(); this.#renderAll(); } }
     else if (act === "renameLayer") { const n = prompt(game.i18n.localize("HIVECART.PromptLayer"), L.name); if (n) { L.name = n; this.#persist(); this.#renderAll(); } }
-    else if (act === "removeLayer") { if (M.removeLayer(this.model, L.id)) { this.#cur = Math.max(0, this.#cur - 1); this.#sel = null; this.#persist(); this.#renderAll(); } else ui.notifications.warn("A hive needs at least one layer."); }
+    else if (act === "removeLayer") { if (M.removeLayer(this.map(), L.id)) { this.#cur = Math.max(0, this.#cur - 1); this.#sel = null; this.#persist(); this.#renderAll(); } else ui.notifications.warn("A map needs at least one layer."); }
   }
 
-  #persist() { if (game.user.isGM) this.model.updatedAt = Date.now(); saveHive(foundryAdapter, this.model); }
+  #persist() { if (game.user.isGM) this.map().updatedAt = Date.now(); saveHive(foundryAdapter, this.doc); }
 
   #renderAll() {
-    const root = this.element; const L = this.layer();
-    renderCrossSection(root.querySelector('[data-hc="hive"]'), this.model.layers, this.#cur, (i) => { this.#cur = i; this.#sel = null; this.#renderAll(); });
+    const root = this.element; const map = this.map(), L = this.layer();
+    renderCrossSection(root.querySelector('[data-hc="hive"]'), map.layers, this.#cur, (i) => { this.#cur = i; this.#sel = null; this.#renderAll(); });
     root.querySelector('[data-hc="layerName"]').textContent = L.name;
     root.querySelector('[data-hc="layerSub"]').textContent = L.sub || "";
-    root.querySelector('[data-hc="layerCount"]').textContent = `LAYER ${this.model.layers.length - this.#cur} / ${this.model.layers.length} · ${L.regions.length} REGIONS · ${L.points.length} LANDMARKS`;
-    root.querySelector('[data-hc="sync"]').textContent = `Cogitator online · Last sync ${imperialDate(this.model.updatedAt)} · Praise the Omnissiah!`;
+    root.querySelector('[data-hc="layerCount"]').textContent = `LAYER ${map.layers.length - this.#cur} / ${map.layers.length} · ${L.regions.length} REGIONS · ${L.points.length} LANDMARKS`;
+    root.querySelector('[data-hc="sync"]').textContent = `Cogitator online · Last sync ${imperialDate(map.updatedAt)} · Praise the Omnissiah!`;
     this.#renderInfo();   // also re-renders the disk (selection highlight)
   }
 
