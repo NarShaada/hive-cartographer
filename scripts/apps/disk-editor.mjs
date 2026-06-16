@@ -3,6 +3,8 @@ import { polar, angleDeg, toUnit, wedgePath } from "../geometry.mjs";
 
 const VB = 420, CXp = 210, CYp = 210, Rp = 192;   // svg viewBox space
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Staggered (golden-ratio) negative delay so labels glitch out of sync across the 5s FX cycle.
+const gdelay = (n) => `animation-delay:${(-((n * 1.618) % 5)).toFixed(2)}s`;
 
 export function createDiskEditor(container, ctx) {
   let drag = null;      // active draw gesture
@@ -25,24 +27,25 @@ export function createDiskEditor(container, ctx) {
       const a = t * 15, [x1, y1] = polar(CXp, CYp, Rp + 6, a), [x2, y2] = polar(CXp, CYp, Rp + (t % 6 === 0 ? 16 : 11), a);
       s += `<line class="hc-tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
     }
+    let li = 0;   // running label index → staggered glitch delay
     // regions in array order — later in the array = drawn on top (z-order, controllable via front/back)
     for (const rg of L.regions) {
       const on = rg.id === sel;
       if (rg.type === "wedge") {
         s += `<path class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" d="${wedgePath(CXp, CYp, Rp, rg.a0, rg.a1, rg.rOut)}" fill="${rg.color}" fill-opacity="${on ? .95 : .8}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`;
         const [lx, ly] = polar(CXp, CYp, rg.rOut * Rp * 0.6, (rg.a0 + (rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1)) / 2);
-        s += `<text class="hc-rlabel" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+        s += `<text class="hc-rlabel" style="${gdelay(li++)}" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
       } else {
         const [px, py] = [CXp + rg.cx * Rp, CYp + rg.cy * Rp], pr = rg.r * Rp;
         s += `<circle class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" cx="${px}" cy="${py}" r="${pr}" fill="${rg.color}" fill-opacity="${on ? .95 : .85}" stroke="rgba(200,162,74,.5)" stroke-width="1.2"/>`;
-        s += `<text class="hc-clabel" x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+        s += `<text class="hc-clabel" style="${gdelay(li++)}" x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
       }
     }
     // landmarks
     for (const p of L.points) {
       const on = p.id === sel, [px, py] = [CXp + p.x * Rp, CYp + p.y * Rp], d = 8;
       s += `<path class="hc-pmark${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${p.id}" d="M ${px} ${py - d} L ${px + d} ${py} L ${px} ${py + d} L ${px - d} ${py} Z"/>`;
-      s += `<text class="hc-plabel" x="${px + d + 4}" y="${py + 4}">${esc(p.name)}</text>`;
+      s += `<text class="hc-plabel" style="${gdelay(li++)}" x="${px + d + 4}" y="${py + 4}">${esc(p.name)}</text>`;
     }
     // selection handles
     if (clickable && sel) {

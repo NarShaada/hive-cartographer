@@ -78,12 +78,19 @@
 .hive-cart .hc-led{width:8px;height:8px;border-radius:50%;background:#62c39a;box-shadow:0 0 7px #62c39a;flex:0 0 auto;animation:hc-pulse 2.4s ease-in-out infinite;}
 @keyframes hc-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* Optional "cogitator screen" FX (client setting). Gentle + pointer-safe: only scanline drift,
-   a faint flicker, and a slow UNIFORM scale/drift on the map (uniform scale keeps clicks accurate). */
-.hive-cart.hc-fx::after{animation:hc-scanroll 2s linear infinite;opacity:.8;}
-.hive-cart.hc-fx{animation:hc-flicker 6s ease-in-out infinite;}
-.hive-cart.hc-fx .hc-disk svg{animation:hc-breathe 7s ease-in-out infinite;transform-origin:center;will-change:transform;}
-@keyframes hc-scanroll{from{background-position:0 0;}to{background-position:0 3px;}}
-@keyframes hc-flicker{0%,100%{opacity:1}43%{opacity:.965}57%{opacity:.985}}
-@keyframes hc-breathe{0%,100%{transform:scale(1) translateY(0);}50%{transform:scale(1.013) translateY(-2px);}}
-@media (prefers-reduced-motion: reduce){.hive-cart.hc-fx,.hive-cart.hc-fx::after,.hive-cart.hc-fx .hc-disk svg{animation:none;}}
+/* Optional "cogitator" FX (client setting): each label briefly glitches (RGB split + jitter) on a
+   staggered cycle, so the readout feels alive without constant, eye-tiring motion. Labels carry
+   pointer-events:none, so this never affects drawing/selection. Stagger comes from inline
+   animation-delay set per label in JS. */
+.hive-cart.hc-fx .hc-rlabel,
+.hive-cart.hc-fx .hc-clabel,
+.hive-cart.hc-fx .hc-plabel,
+.hive-cart.hc-fx .hc-chip b{animation:hc-glitch 5s steps(1,end) infinite;}
+@keyframes hc-glitch{
+  0%,8%,100%{transform:translate(0);filter:none;opacity:1;}
+  1%{transform:translate(-2px,0);filter:drop-shadow(2px 0 #ff2d55) drop-shadow(-2px 0 #16e0ff);}
+  3%{transform:translate(2px,1px);opacity:.8;filter:drop-shadow(-2px 0 #ff2d55) drop-shadow(2px 0 #16e0ff);}
+  5%{transform:translate(-1px,0);filter:drop-shadow(1px 0 #ff2d55) drop-shadow(-1px 0 #16e0ff);}
+  6.5%{transform:translate(1px,0);filter:none;}
+}
+@media (prefers-reduced-motion: reduce){.hive-cart.hc-fx .hc-rlabel,.hive-cart.hc-fx .hc-clabel,.hive-cart.hc-fx .hc-plabel,.hive-cart.hc-fx .hc-chip b{animation:none;}}

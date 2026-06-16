@@ -18,7 +18,8 @@ export function renderCrossSection(container, layers, activeIndex, onSelect) {
     div.style.clipPath = `polygon(${tl}% 0, ${tr}% 0, ${br}% 100%, ${bl}% 100%)`;
     div.style.flexGrow = grow(i, layers.length).toFixed(3);
     div.addEventListener("click", () => onSelect(i));
-    div.innerHTML = `<div class="hc-chip"><span class="hc-lv">L${layers.length - i}</span><b>${esc(L.name)}</b></div>`;
+    const gd = (-((i * 1.618 + 2.5) % 5)).toFixed(2);   // staggered glitch delay (offset from disk labels)
+    div.innerHTML = `<div class="hc-chip"><span class="hc-lv">L${layers.length - i}</span><b style="animation-delay:${gd}s">${esc(L.name)}</b></div>`;
     container.appendChild(div);
   });
 }
