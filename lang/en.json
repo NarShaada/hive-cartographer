@@ -30,5 +30,10 @@
   "HIVECART.PromptDistrict": "Name the district:",
   "HIVECART.PromptZone": "Name the zone:",
   "HIVECART.PromptLandmark": "Name the landmark:",
-  "HIVECART.PromptLayer": "Name the layer:"
+  "HIVECART.PromptLayer": "Name the layer:",
+  "HIVECART.PromptRename": "New name:",
+  "HIVECART.OK": "Confirm",
+  "HIVECART.NewMapTitle": "New Map",
+  "HIVECART.ColourTitle": "District / Zone Colour",
+  "HIVECART.Hex": "Hex (overrides)"
 }

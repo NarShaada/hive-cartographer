@@ -19,9 +19,19 @@
 .hive-cart .hc-mapgm{display:flex;gap:6px;align-items:center;}
 .hive-cart .hc-mapbar .hc-tool{margin:0;}
 .hive-cart.player .hc-mapgm{display:none;}
-.hive-cart .hc-singletoggle{display:inline-flex;align-items:center;gap:5px;font-family:var(--cond);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;}
 .hive-cart.hc-single .hc-cross{display:none;}
 .hive-cart.hc-single .hc-layeronly{display:none;}
+
+/* In-Foundry dialog content (DialogV2 injects these inside its own themed frame, outside .hive-cart) */
+.hc-dialog{display:flex;flex-direction:column;gap:7px;padding:4px 2px;min-width:300px;}
+.hc-dialog label{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7d8896;}
+.hc-dialog input[type="text"]{font-family:'Barlow Condensed',sans-serif;font-size:14px;padding:4px 8px;}
+.hc-dialog label.hc-check{display:flex;align-items:center;gap:7px;text-transform:none;letter-spacing:.5px;color:inherit;cursor:pointer;margin-top:2px;}
+.hc-dialog label.hc-check input{width:auto;}
+.hc-colourdlg .hc-swatches{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+.hc-colourdlg .hc-swatch-btn{width:28px;height:28px;border:1px solid rgba(255,255,255,.3);cursor:pointer;display:inline-block;position:relative;}
+.hc-colourdlg .hc-swatch-btn input{position:absolute;opacity:0;width:0;height:0;}
+.hc-colourdlg .hc-swatch-btn:has(input:checked){outline:2px solid #e6c878;outline-offset:1px;}
 
 /* cross-section */
 .hive-cart .hc-cross{width:240px;flex:0 0 240px;border-right:1px solid var(--line);padding:12px 8px;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--bg2),var(--bg));}
