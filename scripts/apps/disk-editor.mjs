@@ -4,6 +4,35 @@ import { polar, angleDeg, toUnit, wedgePath } from "../geometry.mjs";
 const VB = 420, CXp = 210, CYp = 210, Rp = 192;   // svg viewBox space
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// Label for a region honouring rg.labelPos ("center" | "edge" | "none"). Edge text follows a per-type
+// SVG path via <textPath> (wedge: outer arc; circle: bottom arc; rect: bottom line).
+function regionLabel(rg) {
+  const pos = rg.labelPos === "edge" || rg.labelPos === "none" ? rg.labelPos : "center";
+  if (pos === "none") return "";
+  const cls = rg.type === "wedge" ? "hc-rlabel" : "hc-clabel";
+  if (pos === "center") {
+    let lx, ly;
+    if (rg.type === "wedge") { [lx, ly] = polar(CXp, CYp, rg.rOut * Rp * 0.6, (rg.a0 + (rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1)) / 2); }
+    else { lx = CXp + rg.cx * Rp; ly = CYp + rg.cy * Rp; }
+    return `<text class="${cls}" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+  }
+  // edge — curved text along a per-type edge path
+  let d;
+  if (rg.type === "wedge") {
+    const a0 = rg.a0, a1 = rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1, rr = rg.rOut * Rp;
+    const [sx, sy] = polar(CXp, CYp, rr, a0), [ex, ey] = polar(CXp, CYp, rr, a1);
+    d = `M ${sx} ${sy} A ${rr} ${rr} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${ex} ${ey}`;
+  } else if (rg.type === "rect") {
+    const y = CYp + (rg.cy + rg.hh) * Rp;
+    d = `M ${CXp + (rg.cx - rg.hw) * Rp} ${y} L ${CXp + (rg.cx + rg.hw) * Rp} ${y}`;
+  } else {
+    const cx = CXp + rg.cx * Rp, cy = CYp + rg.cy * Rp, rr = rg.r * Rp;
+    d = `M ${cx - rr} ${cy} A ${rr} ${rr} 0 0 1 ${cx + rr} ${cy}`;
+  }
+  return `<path id="lblpath-${rg.id}" d="${d}" fill="none" stroke="none"/>`
+    + `<text class="${cls}"><textPath href="#lblpath-${rg.id}" startOffset="50%" text-anchor="middle">${esc(rg.name)}</textPath></text>`;
+}
+
 export function createDiskEditor(container, ctx) {
   let drag = null;      // active draw gesture
   let selDrag = null;   // active move/resize gesture (GM only)
@@ -30,16 +59,15 @@ export function createDiskEditor(container, ctx) {
       const on = rg.id === sel;
       if (rg.type === "wedge") {
         s += `<path class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" d="${wedgePath(CXp, CYp, Rp, rg.a0, rg.a1, rg.rOut)}" fill="${rg.color}" fill-opacity="${on ? .95 : .8}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`;
-        const [lx, ly] = polar(CXp, CYp, rg.rOut * Rp * 0.6, (rg.a0 + (rg.a1 < rg.a0 ? rg.a1 + 360 : rg.a1)) / 2);
-        s += `<text class="hc-rlabel" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+        s += regionLabel(rg);
       } else if (rg.type === "rect") {
         const rx = CXp + (rg.cx - rg.hw) * Rp, ry = CYp + (rg.cy - rg.hh) * Rp;
         s += `<rect class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" x="${rx}" y="${ry}" width="${2 * rg.hw * Rp}" height="${2 * rg.hh * Rp}" fill="${rg.color}" fill-opacity="${on ? .95 : .82}" stroke="rgba(200,162,74,.5)" stroke-width="1.2"/>`;
-        s += `<text class="hc-clabel" x="${CXp + rg.cx * Rp}" y="${CYp + rg.cy * Rp}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+        s += regionLabel(rg);
       } else {
         const px = CXp + rg.cx * Rp, py = CYp + rg.cy * Rp, pr = rg.r * Rp;
         s += `<circle class="hc-region${clickable ? " clickable" : ""}${on ? " sel" : ""}" data-id="${rg.id}" cx="${px}" cy="${py}" r="${pr}" fill="${rg.color}" fill-opacity="${on ? .95 : .85}" stroke="rgba(200,162,74,.5)" stroke-width="1.2"/>`;
-        s += `<text class="hc-clabel" x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle">${esc(rg.name)}</text>`;
+        s += regionLabel(rg);
       }
     }
     // landmarks
