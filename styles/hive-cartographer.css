@@ -19,6 +19,9 @@
 .hive-cart .hc-mapgm{display:flex;gap:6px;align-items:center;}
 .hive-cart .hc-mapbar .hc-tool{margin:0;}
 .hive-cart.player .hc-mapgm{display:none;}
+.hive-cart .hc-singletoggle{display:inline-flex;align-items:center;gap:5px;font-family:var(--cond);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;}
+.hive-cart.hc-single .hc-cross{display:none;}
+.hive-cart.hc-single .hc-layeronly{display:none;}
 
 /* cross-section */
 .hive-cart .hc-cross{width:240px;flex:0 0 240px;border-right:1px solid var(--line);padding:12px 8px;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--bg2),var(--bg));}

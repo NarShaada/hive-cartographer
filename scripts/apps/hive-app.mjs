@@ -44,6 +44,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     root.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener("click", () => this.#setMode(b.dataset.mode)));
     root.querySelectorAll('[data-act]').forEach((b) => b.addEventListener("click", () => this.#action(b.dataset.act)));
     root.querySelector('[data-hc="mapSelect"]').addEventListener("change", (e) => { this.#curMapId = e.target.value; this.#cur = 0; this.#sel = null; this.#renderAll(); });
+    root.querySelector('[data-hc="singleLayer"]').addEventListener("change", (e) => { M.setSingleLayer(this.doc, this.#curMapId, e.target.checked); this.#cur = 0; this.#sel = null; this.#persist(); this.#renderAll(); });
     // disk editor (destroy any prior instance's window listeners first)
     this.#disk?.destroy();
     this.#disk = createDiskEditor(root.querySelector('[data-hc="disk"]'), this.#ctx());
@@ -151,7 +152,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #renderAll() {
     const root = this.element; const map = this.map(), L = this.layer();
     this.#renderMapBar(root, map);
-    renderCrossSection(root.querySelector('[data-hc="hive"]'), map.layers, this.#cur, (i) => { this.#cur = i; this.#sel = null; this.#renderAll(); });
+    if (!map.singleLayer) renderCrossSection(root.querySelector('[data-hc="hive"]'), map.layers, this.#cur, (i) => { this.#cur = i; this.#sel = null; this.#renderAll(); });
     root.querySelector('[data-hc="layerName"]').textContent = L.name;
     root.querySelector('[data-hc="layerSub"]').textContent = L.sub || "";
     root.querySelector('[data-hc="layerCount"]').textContent = `LAYER ${map.layers.length - this.#cur} / ${map.layers.length} · ${L.regions.length} REGIONS · ${L.points.length} LANDMARKS`;
@@ -162,6 +163,8 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #renderMapBar(root, map) {
     const sel = root.querySelector('[data-hc="mapSelect"]');
     sel.innerHTML = this.doc.maps.map((m) => `<option value="${m.id}"${m.id === map.id ? " selected" : ""}>${esc(m.name)}</option>`).join("");
+    root.querySelector('[data-hc="singleLayer"]').checked = !!map.singleLayer;
+    root.querySelector(".hive-cart").classList.toggle("hc-single", !!map.singleLayer);
   }
 
   #renderInfo() {
