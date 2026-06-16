@@ -58,3 +58,15 @@ export async function promptColour(current) {
   });
   return res || null;
 }
+
+// Multi-line description editor. Resolves to the text (may be empty — clears the description), or null on cancel.
+export async function promptDescription(current) {
+  const res = await DialogV2.prompt({
+    window: { title: L("HIVECART.DescribeTitle") },
+    content: `<div class="hc-dialog"><label>${L("HIVECART.Describe")}</label><textarea name="text" rows="5">${esc(current)}</textarea></div>`,
+    ok: { label: L("HIVECART.OK"), callback: (e, button) => button.form.elements.text.value.trim() },
+    rejectClose: false,
+    render: (e, dialog) => { const t = dialog.element.querySelector('textarea[name="text"]'); if (t) t.focus(); },
+  });
+  return res ?? null;
+}

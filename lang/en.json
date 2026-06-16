@@ -35,5 +35,10 @@
   "HIVECART.OK": "Confirm",
   "HIVECART.NewMapTitle": "New Map",
   "HIVECART.ColourTitle": "District / Zone Colour",
-  "HIVECART.Hex": "Hex (overrides)"
+  "HIVECART.Hex": "Hex (overrides)",
+  "HIVECART.Block": "Block",
+  "HIVECART.PromptBlock": "Name the block:",
+  "HIVECART.Describe": "Description",
+  "HIVECART.DescribeTitle": "Edit Description",
+  "HIVECART.NoDescription": "No description — use Describe to add one."
 }
