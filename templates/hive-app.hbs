@@ -1,4 +1,13 @@
 <div class="hive-cart {{roleClass}}">
+  <div class="hc-mapbar">
+    <span class="hc-maplabel">{{localize "HIVECART.Map"}}</span>
+    <select class="hc-mapselect" data-hc="mapSelect"></select>
+    <span class="hc-mapgm gm">
+      <button class="hc-tool" data-act="mapRename">{{localize "HIVECART.RenameMap"}}</button>
+      <button class="hc-tool" data-act="mapNew">{{localize "HIVECART.NewMap"}}</button>
+      <button class="hc-tool" data-act="mapDelete">{{localize "HIVECART.DeleteMap"}}</button>
+    </span>
+  </div>
   <div class="hc-main">
     <section class="hc-cross">
       <div class="hc-collabel">{{localize "HIVECART.CrossSection"}}</div>

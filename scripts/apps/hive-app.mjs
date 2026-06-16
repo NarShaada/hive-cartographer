@@ -43,6 +43,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // inspector buttons
     root.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener("click", () => this.#setMode(b.dataset.mode)));
     root.querySelectorAll('[data-act]').forEach((b) => b.addEventListener("click", () => this.#action(b.dataset.act)));
+    root.querySelector('[data-hc="mapSelect"]').addEventListener("change", (e) => { this.#curMapId = e.target.value; this.#cur = 0; this.#sel = null; this.#renderAll(); });
     // disk editor (destroy any prior instance's window listeners first)
     this.#disk?.destroy();
     this.#disk = createDiskEditor(root.querySelector('[data-hc="disk"]'), this.#ctx());
@@ -130,6 +131,9 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #action(act) {
     const L = this.layer();
+    if (act === "mapNew") { const n = prompt(game.i18n.localize("HIVECART.PromptMap"), "New Map"); if (!n) return; this.#curMapId = M.addMap(this.doc, n); this.#cur = 0; this.#sel = null; this.#persist(); this.#renderAll(); return; }
+    if (act === "mapRename") { const n = prompt(game.i18n.localize("HIVECART.PromptMap"), this.map().name); if (n) { M.renameMap(this.doc, this.#curMapId, n); this.#persist(); this.#renderAll(); } return; }
+    if (act === "mapDelete") { if (M.removeMap(this.doc, this.#curMapId)) { this.#syncMap(); this.#sel = null; this.#persist(); this.#renderAll(); } else ui.notifications.warn("A world needs at least one map."); return; }
     if (act === "rename") { const e = this.#sel && M.findEntity(L, this.#sel); if (!e) return ui.notifications.warn("Select something first."); const n = prompt("Rename:", e.name); if (n) { M.renameEntity(L, this.#sel, n); this.#persist(); this.#renderAll(); } }
     else if (act === "recolour") { this.#pickColour(); }
     else if (act === "front") { if (this.#sel && M.bringToFront(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
@@ -146,12 +150,18 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #renderAll() {
     const root = this.element; const map = this.map(), L = this.layer();
+    this.#renderMapBar(root, map);
     renderCrossSection(root.querySelector('[data-hc="hive"]'), map.layers, this.#cur, (i) => { this.#cur = i; this.#sel = null; this.#renderAll(); });
     root.querySelector('[data-hc="layerName"]').textContent = L.name;
     root.querySelector('[data-hc="layerSub"]').textContent = L.sub || "";
     root.querySelector('[data-hc="layerCount"]').textContent = `LAYER ${map.layers.length - this.#cur} / ${map.layers.length} · ${L.regions.length} REGIONS · ${L.points.length} LANDMARKS`;
     root.querySelector('[data-hc="sync"]').textContent = `Cogitator online · Last sync ${imperialDate(map.updatedAt)} · Praise the Omnissiah!`;
     this.#renderInfo();   // also re-renders the disk (selection highlight)
+  }
+
+  #renderMapBar(root, map) {
+    const sel = root.querySelector('[data-hc="mapSelect"]');
+    sel.innerHTML = this.doc.maps.map((m) => `<option value="${m.id}"${m.id === map.id ? " selected" : ""}>${esc(m.name)}</option>`).join("");
   }
 
   #renderInfo() {
