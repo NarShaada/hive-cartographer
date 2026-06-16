@@ -39,6 +39,7 @@
   "HIVECART.Block": "Block",
   "HIVECART.PromptBlock": "Name the block:",
   "HIVECART.Describe": "Description",
+  "HIVECART.Label": "Label",
   "HIVECART.DescribeTitle": "Edit Description",
   "HIVECART.NoDescription": "No description — use Describe to add one."
 }
