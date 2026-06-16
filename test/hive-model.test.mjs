@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { defaultHive, defaultMap, defaultLayer, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
 import { mapById, addMap, removeMap, renameMap } from "../scripts/data/hive-model.mjs";
 import { addLayer, removeLayer, moveLayer, layerById } from "../scripts/data/hive-model.mjs";
-import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, setColor, bringToFront, sendToBack, PALETTE } from "../scripts/data/hive-model.mjs";
+import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, setColor, bringToFront, sendToBack, addRect, setDescription, PALETTE } from "../scripts/data/hive-model.mjs";
 
 describe("defaults", () => {
   it("a default document has one map with one empty layer", () => {
@@ -120,5 +120,49 @@ describe("entity CRUD (on a map)", () => {
     expect(L.regions[0].id).toBe(wid);
     expect(removeEntity(L, pid)).toBe(true);
     expect(L.points).toHaveLength(0);
+  });
+});
+
+describe("descriptions", () => {
+  it("new entities default description to empty string", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const wid = addWedge(map, L.id, { name: "W" });
+    expect(findEntity(L, wid).description).toBe("");
+  });
+  it("setDescription sets text; false for an unknown id", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const cid = addCircle(map, L.id, { name: "Z", cx: 0, cy: 0, r: 0.2 });
+    expect(setDescription(L, cid, "A safe house.")).toBe(true);
+    expect(findEntity(L, cid).description).toBe("A safe house.");
+    expect(setDescription(L, "nope", "x")).toBe(false);
+  });
+  it("migrate fills description on entities that lack it", () => {
+    const raw = { version: 2, maps: [{ name: "M", layers: [{ regions: [{ type: "circle", cx: 0, cy: 0, r: 0.2 }], points: [{ x: 0, y: 0 }] }] }] };
+    const d = migrate(raw);
+    expect(d.maps[0].layers[0].regions[0].description).toBe("");
+    expect(d.maps[0].layers[0].points[0].description).toBe("");
+  });
+});
+
+describe("blocks (rect)", () => {
+  it("addRect creates a rect region with geometry + empty description", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const id = addRect(map, L.id, { name: "Block A", cx: 0.2, cy: -0.1, hw: 0.3, hh: 0.2 });
+    const r = findEntity(L, id);
+    expect(r.type).toBe("rect"); expect(r.hw).toBe(0.3); expect(r.hh).toBe(0.2); expect(r.description).toBe("");
+  });
+  it("migrate routes a type:rect region through fixRect (defaults hw/hh)", () => {
+    const d = migrate({ version: 2, maps: [{ layers: [{ regions: [{ type: "rect", cx: 0, cy: 0 }], points: [] }] }] });
+    const r = d.maps[0].layers[0].regions[0];
+    expect(r.type).toBe("rect"); expect(r.hw).toBe(0.15); expect(r.hh).toBe(0.15);
+  });
+  it("generic ops work on a rect (setColor, bringToFront, remove)", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const a = addRect(map, L.id, { name: "A", cx: 0, cy: 0, hw: 0.2, hh: 0.2 });
+    addWedge(map, L.id, { name: "B" });
+    expect(setColor(L, a, "#123456")).toBe(true);
+    expect(bringToFront(L, a)).toBe(true);
+    expect(L.regions[L.regions.length - 1].id).toBe(a);
+    expect(removeEntity(L, a)).toBe(true);
   });
 });

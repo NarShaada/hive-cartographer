@@ -32,6 +32,7 @@ function fixWedge(r) {
     id: r.id || newId("w"), type: "wedge",
     name: r.name || "District", color: r.color || PALETTE[0],
     a0: Number.isFinite(r.a0) ? r.a0 : 0, a1: Number.isFinite(r.a1) ? r.a1 : 90, rOut: Number.isFinite(r.rOut) ? r.rOut : 1,
+    description: r.description || "",
   };
 }
 function fixCircle(r) {
@@ -39,14 +40,24 @@ function fixCircle(r) {
     id: r.id || newId("c"), type: "circle",
     name: r.name || "Zone", color: r.color || PALETTE[1],
     cx: Number(r.cx) || 0, cy: Number(r.cy) || 0, r: Number.isFinite(r.r) ? r.r : 0.15,
+    description: r.description || "",
   };
 }
 function fixPoint(p) {
-  return { id: p.id || newId("p"), type: "point", name: p.name || "Landmark", x: Number(p.x) || 0, y: Number(p.y) || 0 };
+  return { id: p.id || newId("p"), type: "point", name: p.name || "Landmark", x: Number(p.x) || 0, y: Number(p.y) || 0, description: p.description || "" };
+}
+function fixRect(r) {
+  return {
+    id: r.id || newId("r"), type: "rect",
+    name: r.name || "Block", color: r.color || PALETTE[3],
+    cx: Number(r.cx) || 0, cy: Number(r.cy) || 0,
+    hw: Number.isFinite(r.hw) ? r.hw : 0.15, hh: Number.isFinite(r.hh) ? r.hh : 0.15,
+    description: r.description || "",
+  };
 }
 function fixLayer(L) {
   const regions = Array.isArray(L.regions)
-    ? L.regions.map((r) => (r.type === "circle" ? fixCircle(r) : fixWedge(r))) : [];
+    ? L.regions.map((r) => (r.type === "circle" ? fixCircle(r) : r.type === "rect" ? fixRect(r) : fixWedge(r))) : [];
   const points = Array.isArray(L.points) ? L.points.map(fixPoint) : [];
   return { id: L.id || newId("L"), name: L.name || "Layer", sub: L.sub || "", regions, points };
 }
@@ -143,6 +154,13 @@ export function addCircle(map, layerId, props) {
   return c.id;
 }
 
+export function addRect(map, layerId, props) {
+  const L = layerById(map, layerId); if (!L) return null;
+  const c = fixRect({ ...props });
+  L.regions.push(c);
+  return c.id;
+}
+
 export function addPoint(map, layerId, props) {
   const L = layerById(map, layerId); if (!L) return null;
   const p = fixPoint({ ...props });
@@ -170,6 +188,11 @@ export function setColor(layer, id, color) {
   const e = findEntity(layer, id);
   if (!e || e.color === undefined) return false;
   e.color = color; return true;
+}
+
+export function setDescription(layer, id, text) {
+  const e = findEntity(layer, id); if (!e) return false;
+  e.description = text; return true;
 }
 
 export function bringToFront(layer, id) {
