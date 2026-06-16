@@ -33,6 +33,7 @@ function fixWedge(r) {
     name: r.name || "District", color: r.color || PALETTE[0],
     a0: Number.isFinite(r.a0) ? r.a0 : 0, a1: Number.isFinite(r.a1) ? r.a1 : 90, rOut: Number.isFinite(r.rOut) ? r.rOut : 1,
     description: r.description || "",
+    labelPos: (r.labelPos === "edge" || r.labelPos === "none") ? r.labelPos : "center",
   };
 }
 function fixCircle(r) {
@@ -41,6 +42,7 @@ function fixCircle(r) {
     name: r.name || "Zone", color: r.color || PALETTE[1],
     cx: Number(r.cx) || 0, cy: Number(r.cy) || 0, r: Number.isFinite(r.r) ? r.r : 0.15,
     description: r.description || "",
+    labelPos: (r.labelPos === "edge" || r.labelPos === "none") ? r.labelPos : "center",
   };
 }
 function fixPoint(p) {
@@ -53,6 +55,7 @@ function fixRect(r) {
     cx: Number(r.cx) || 0, cy: Number(r.cy) || 0,
     hw: Number.isFinite(r.hw) ? r.hw : 0.15, hh: Number.isFinite(r.hh) ? r.hh : 0.15,
     description: r.description || "",
+    labelPos: (r.labelPos === "edge" || r.labelPos === "none") ? r.labelPos : "center",
   };
 }
 function fixLayer(L) {
@@ -193,6 +196,16 @@ export function setColor(layer, id, color) {
 export function setDescription(layer, id, text) {
   const e = findEntity(layer, id); if (!e) return false;
   e.description = text; return true;
+}
+
+const LABEL_POS = ["center", "edge", "none"];
+// Advance a region's label placement center→edge→none→center. False for an unknown id or a landmark.
+export function cycleLabelPos(layer, id) {
+  const e = findEntity(layer, id);
+  if (!e || e.type === "point") return false;
+  const i = Math.max(0, LABEL_POS.indexOf(e.labelPos));
+  e.labelPos = LABEL_POS[(i + 1) % LABEL_POS.length];
+  return e.labelPos;
 }
 
 export function bringToFront(layer, id) {

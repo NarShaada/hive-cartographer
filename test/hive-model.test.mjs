@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { defaultHive, defaultMap, defaultLayer, serialize, migrate, SCHEMA_VERSION } from "../scripts/data/hive-model.mjs";
 import { mapById, addMap, removeMap, renameMap } from "../scripts/data/hive-model.mjs";
 import { addLayer, removeLayer, moveLayer, layerById } from "../scripts/data/hive-model.mjs";
-import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, setColor, bringToFront, sendToBack, addRect, setDescription, PALETTE } from "../scripts/data/hive-model.mjs";
+import { addWedge, addCircle, addPoint, findEntity, removeEntity, renameEntity, setColor, bringToFront, sendToBack, addRect, setDescription, cycleLabelPos, PALETTE } from "../scripts/data/hive-model.mjs";
 
 describe("defaults", () => {
   it("a default document has one map with one empty layer", () => {
@@ -164,5 +164,27 @@ describe("blocks (rect)", () => {
     expect(bringToFront(L, a)).toBe(true);
     expect(L.regions[L.regions.length - 1].id).toBe(a);
     expect(removeEntity(L, a)).toBe(true);
+  });
+});
+
+describe("label placement", () => {
+  it("new regions default labelPos to center", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const id = addWedge(map, L.id, { name: "W" });
+    expect(findEntity(L, id).labelPos).toBe("center");
+  });
+  it("migrate fills labelPos on regions that lack it", () => {
+    const d = migrate({ version: 2, maps: [{ layers: [{ regions: [{ type: "circle", cx: 0, cy: 0, r: 0.2 }], points: [] }] }] });
+    expect(d.maps[0].layers[0].regions[0].labelPos).toBe("center");
+  });
+  it("cycleLabelPos advances center→edge→none→center; false for unknown id and landmarks", () => {
+    const d = defaultHive(); const map = d.maps[0]; const L = map.layers[0];
+    const rid = addRect(map, L.id, { name: "B", cx: 0, cy: 0, hw: 0.2, hh: 0.2 });
+    expect(cycleLabelPos(L, rid)).toBe("edge");
+    expect(cycleLabelPos(L, rid)).toBe("none");
+    expect(cycleLabelPos(L, rid)).toBe("center");
+    expect(cycleLabelPos(L, "nope")).toBe(false);
+    const pid = addPoint(map, L.id, { name: "P", x: 0, y: 0 });
+    expect(cycleLabelPos(L, pid)).toBe(false);
   });
 });
