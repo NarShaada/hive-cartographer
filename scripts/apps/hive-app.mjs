@@ -4,7 +4,7 @@ import { foundryAdapter, MODULE_ID } from "../hive-cartographer.mjs";
 import { renderCrossSection } from "./cross-section.mjs";
 import { createDiskEditor } from "./disk-editor.mjs";
 import * as M from "../data/hive-model.mjs";
-import { promptText, promptNewMap, promptColour } from "./dialogs.mjs";
+import { promptText, promptNewMap, promptColour, promptDescription } from "./dialogs.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -100,6 +100,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
       select: (id) => { this.#sel = id; this.#renderInfo(); },
       addWedge: (d) => { M.addWedge(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
       addCircle: (d) => { M.addCircle(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
+      addRect: (d) => { M.addRect(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
       addPoint: (d) => { M.addPoint(this.map(), this.layer().id, d); this.#persist(); this.#renderAll(); },
       mutateSelected: (fn, { persist = true } = {}) => {
         const e = this.#sel && M.findEntity(this.layer(), this.#sel);
@@ -134,6 +135,7 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     else if (act === "front") { if (this.#sel && M.bringToFront(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
     else if (act === "back") { if (this.#sel && M.sendToBack(L, this.#sel)) { this.#persist(); this.#renderAll(); } else ui.notifications.warn("Select a district or zone."); }
     else if (act === "delete") { if (!this.#sel || !M.removeEntity(L, this.#sel)) return ui.notifications.warn("Select something first."); this.#sel = null; this.#persist(); this.#renderAll(); }
+    else if (act === "describe") { const e = this.#sel && M.findEntity(L, this.#sel); if (!e) return ui.notifications.warn("Select something first."); const text = await promptDescription(e.description ?? ""); if (text !== null && this.element?.isConnected) { M.setDescription(L, this.#sel, text); this.#persist(); this.#renderAll(); } }
     else if (act === "addLayer") { const n = await promptText({ title: game.i18n.localize("HIVECART.AddLayer"), label: game.i18n.localize("HIVECART.PromptLayer"), value: "New Layer" }); if (!n || !this.element?.isConnected) return; M.addLayer(this.map(), n, ""); this.#cur = this.map().layers.length - 1; this.#sel = null; this.#persist(); this.#renderAll(); }
     else if (act === "layerUp") { if (M.moveLayer(this.map(), L.id, -1)) { this.#cur = Math.max(0, this.#cur - 1); this.#persist(); this.#renderAll(); } }
     else if (act === "layerDown") { if (M.moveLayer(this.map(), L.id, 1)) { this.#cur = Math.min(this.map().layers.length - 1, this.#cur + 1); this.#persist(); this.#renderAll(); } }
@@ -164,9 +166,12 @@ export class HiveApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#disk.render();
     const box = this.element.querySelector('[data-hc="info"]'); const e = this.#sel && M.findEntity(this.layer(), this.#sel);
     if (!e) { box.className = "hc-info empty"; box.innerHTML = `<div class="hc-lbl">${game.i18n.localize("HIVECART.Selection")}</div><div class="hc-name">${game.i18n.localize("HIVECART.NothingSelected")}</div>`; return; }
-    const kind = e.type === "wedge" ? "District" : e.type === "circle" ? "Zone" : "Landmark";
+    const kind = e.type === "wedge" ? "District" : e.type === "circle" ? "Zone" : e.type === "rect" ? "Block" : "Landmark";
     const sw = `<span class="hc-swatch" style="background:${e.color || "var(--gold2)"}"></span>`;
+    const desc = e.description
+      ? `<div class="hc-desc">${esc(e.description)}</div>`
+      : (game.user.isGM ? `<div class="hc-desc empty">${game.i18n.localize("HIVECART.NoDescription")}</div>` : "");
     box.className = "hc-info";
-    box.innerHTML = `<div class="hc-lbl">${game.i18n.localize("HIVECART.Selection")}</div><div class="hc-name">${sw}${esc(e.name)} <span style="font-family:var(--mono);font-size:9px;color:var(--gold);border:1px solid var(--line2);padding:1px 5px;">${kind}</span></div>`;
+    box.innerHTML = `<div class="hc-lbl">${game.i18n.localize("HIVECART.Selection")}</div><div class="hc-name">${sw}${esc(e.name)} <span style="font-family:var(--mono);font-size:9px;color:var(--gold);border:1px solid var(--line2);padding:1px 5px;">${kind}</span></div>${desc}`;
   }
 }
